@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Target Digital Fabric QA Checker v1.5</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --pass: #0f766e;
+      --fail: #b91c1c;
+      --warn: #b45309;
+      --primary: #111827;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 28px 32px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    header p {
+      margin: 0;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .full { grid-column: 1 / -1; }
+    .dropzone {
+      border: 2px dashed #9ca3af;
+      border-radius: 14px;
+      padding: 34px;
+      text-align: center;
+      background: #fafafa;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: #111827;
+      background: #f3f4f6;
+    }
+    input[type="file"] { display: none; }
+    .options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 18px;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    h3 {
+      margin: 18px 0 10px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+    .score {
+      font-size: 46px;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .status.pass { background: var(--pass); }
+    .status.fail { background: var(--fail); }
+    .status.warn { background: var(--warn); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f9fafb;
+      color: #374151;
+    }
+    .pass-text { color: var(--pass); font-weight: 700; }
+    .fail-text { color: var(--fail); font-weight: 700; }
+    .warn-text { color: var(--warn); font-weight: 700; }
+    .small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .btn {
+      background: #111827;
+      color: white;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 10px;
+    }
+    .btn.secondary { background: #4b5563; }
+    .file-list {
+      max-height: 260px;
+      overflow: auto;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .map-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .map-card img {
+      width: 100%;
+      height: 260px;
+      object-fit: contain;
+      background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 24px 24px;
+      cursor: zoom-in;
+      display: block;
+    }
+    .map-card .meta {
+      padding: 10px 12px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      background: rgba(0,0,0,0.86);
+      padding: 24px;
+    }
+    .modal.show { display: flex; flex-direction: column; }
+    .modal-toolbar {
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .modal-title-wrap {
+      min-width: 260px;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .modal-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .modal-toolbar button {
+      background: white;
+      color: #111827;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .modal-toolbar input[type="range"] {
+      width: 180px;
+    }
+    #zoomValue {
+      min-width: 56px;
+      text-align: right;
+      font-weight: 700;
+    }
+    .modal-canvas {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      border-radius: 10px;
+      background: repeating-conic-gradient(#303030 0% 25%, #202020 0% 50%) 50% / 32px 32px;
+      cursor: grab;
+      min-height: 300px;
+    }
+    .modal-canvas.dragging { cursor: grabbing; }
+    .modal img {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      max-width: none;
+      max-height: none;
+      transform-origin: center center;
+      image-rendering: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .modal-help {
+      color: #d1d5db;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Target Digital Fabric QA Checker v1.5</h1>
+    <p>Local browser-based checker for .zfab naming, required texture maps, PNG resolution, DPI, physical size, and package consistency. v1.5 adds Target naming convention audit: FASID_FabricType_Weightgsm_Content%_FiberAbbreviation, including gsm requirement, content total = 100, and approved fiber abbreviation validation.</p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <section class="card full">
+        <h2>Upload .zfab File</h2>
+        <div id="dropzone" class="dropzone">
+          <strong>Drag & Drop .zfab here</strong><br />
+          <span class="small">or click to select a file</span>
+          <input id="fileInput" type="file" accept=".zfab,.zip" />
+        </div>
+        <div class="options">
+          <label><input type="checkbox" id="isTransparent" /> Transparent / Sheer / Mesh / Lace / Tulle</label>
+          <label><input type="checkbox" id="isDoubleSided" /> Double-sided fabric</label>
+        </div>
+        <p class="small">Note: This tool first tries ZIP package reading. If the .zfab is not ZIP-readable, it will scan for embedded PNG textures and still check resolution, DPI, physical size, and 8-bit PNG where possible.</p>
+        <p class="small"><strong>Naming rule v1.5:</strong> FASID_FabricType_Weightgsm_Content%_FiberAbbreviation. Example: FAS1234_Jersey_180gsm_80_10_10_RecCtn_RecPoly_Span. Weight must include gsm; content numbers must total 100; fiber names must use approved abbreviations.</p>
+      </section>
+
+      <section class="card">
+        <h2>QA Score</h2>
+        <div id="score" class="score">--</div>
+        <div id="overallStatus" class="status warn">NO FILE</div>
+        <p id="summary" class="small">Upload a .zfab file to start validation.</p>
+        <button class="btn" id="downloadCsv" disabled>Export CSV Report</button>
+        <button class="btn secondary" id="resetBtn">Reset</button>
+      </section>
+
+      <section class="card">
+        <h2>Detected Package Files</h2>
+        <div id="fileList" class="file-list">No file loaded.</div>
+      </section>
+
+      <section class="card full">
+        <h2>Validation Results</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 22%;">Check Item</th>
+              <th style="width: 12%;">Result</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="3" class="small">No validation results yet.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card full">
+        <h2>Texture Map Details</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Map</th>
+              <th>File Name</th>
+              <th>Resolution</th>
+              <th>DPI</th>
+              <th>Physical Size</th>
+              <th>Format</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="mapBody">
+            <tr><td colspan="7" class="small">No texture maps detected yet.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card full">
+        <h2>Extracted Texture Map Preview</h2>
+        <p class="small">Click any map to open a full-screen large preview. Use this area for manual visual QA: unnatural capture, obvious wrinkles, shadows, stains, or abnormal scan artifacts.</p>
+        <div id="mapGallery" class="gallery-grid"><div class="small">No texture map preview yet.</div></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="imageModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-toolbar">
+      <div class="modal-title-wrap">
+        <div id="modalTitle">Texture map preview</div>
+        <div class="modal-help">Mouse wheel = zoom in/out | Drag = pan | Use Actual Size for wrinkle/spot inspection</div>
+      </div>
+      <div class="modal-tools">
+        <button id="zoomOutBtn" type="button">−</button>
+        <input id="zoomRange" type="range" min="25" max="800" value="100" step="25" />
+        <span id="zoomValue">100%</span>
+        <button id="zoomInBtn" type="button">+</button>
+        <button id="fitBtn" type="button">Fit</button>
+        <button id="actualBtn" type="button">Actual Size</button>
+        <button id="closeModal" type="button">Close</button>
+      </div>
+    </div>
+    <div id="modalCanvas" class="modal-canvas">
+      <img id="modalImg" alt="Large texture map preview" />
+    </div>
+  </div>
+
+  <script>
+    const REQUIRED_MAPS = ["COL", "NRM", "ROUGH", "DISP", "METAL"];
+    const MAP_ALIASES = {
+      COL: ["_COL", "_COLOR", "_DIFFUSE", "_BASE", "_ALBEDO"],
+      NRM: ["_NRM", "_NORMAL"],
+      ROUGH: ["_ROUGH", "_ROUGHNESS"],
+      DISP: ["_DISP", "_DISPLACEMENT"],
+      METAL: ["_METAL", "_METALLIC", "_MTL"],
+      ALPHA: ["_ALPHA", "_OPACITY"]
+    };
+
+    let currentReport = [];
+    let currentImageUrls = [];
+    let zoomScale = 1;
+    let fitScale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const resultsBody = document.getElementById("resultsBody");
+    const mapBody = document.getElementById("mapBody");
+    const fileList = document.getElementById("fileList");
+    const scoreEl = document.getElementById("score");
+    const statusEl = document.getElementById("overallStatus");
+    const summaryEl = document.getElementById("summary");
+    const downloadCsv = document.getElementById("downloadCsv");
+    const resetBtn = document.getElementById("resetBtn");
+    const gallery = document.getElementById("mapGallery");
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImg");
+    const modalCanvas = document.getElementById("modalCanvas");
+    const modalTitle = document.getElementById("modalTitle");
+    const closeModal = document.getElementById("closeModal");
+    const zoomRange = document.getElementById("zoomRange");
+    const zoomValue = document.getElementById("zoomValue");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const fitBtn = document.getElementById("fitBtn");
+    const actualBtn = document.getElementById("actualBtn");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
+
+    dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("dragover"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+    dropzone.addEventListener("drop", e => { e.preventDefault(); dropzone.classList.remove("dragover"); handleFile(e.dataTransfer.files[0]); });
+
+    document.getElementById("isTransparent").addEventListener("change", () => { if (window.lastFile) handleFile(window.lastFile); });
+    document.getElementById("isDoubleSided").addEventListener("change", () => { if (window.lastFile) handleFile(window.lastFile); });
+    resetBtn.addEventListener("click", resetAll);
+    downloadCsv.addEventListener("click", exportCsv);
+    closeModal.addEventListener("click", hideModal);
+    modal.addEventListener("click", e => { if (e.target === modal) hideModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") hideModal(); });
+
+    zoomInBtn.addEventListener("click", () => setZoomPercent(Math.round(zoomScale * 100) + 25));
+    zoomOutBtn.addEventListener("click", () => setZoomPercent(Math.round(zoomScale * 100) - 25));
+    zoomRange.addEventListener("input", () => setZoomPercent(Number(zoomRange.value)));
+    fitBtn.addEventListener("click", fitImageToCanvas);
+    actualBtn.addEventListener("click", () => setZoomPercent(100, false));
+
+    modalCanvas.addEventListener("wheel", e => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 25 : -25;
+      setZoomPercent(Math.round(zoomScale * 100) + delta);
+    }, { passive: false });
+
+    modalCanvas.addEventListener("mousedown", e => {
+      isDragging = true;
+      modalCanvas.classList.add("dragging");
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      panStartX = panX;
+      panStartY = panY;
+    });
+
+    window.addEventListener("mousemove", e => {
+      if (!isDragging) return;
+      panX = panStartX + (e.clientX - dragStartX);
+      panY = panStartY + (e.clientY - dragStartY);
+      applyZoom();
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false;
+      modalCanvas.classList.remove("dragging");
+    });
+
+    window.addEventListener("resize", () => {
+      if (modal.classList.contains("show")) applyZoom();
+    });
+
+    async function handleFile(file) {
+      if (!file) return;
+      window.lastFile = file;
+      currentReport = [];
+      cleanupImageUrls();
+      const baseName = file.name.replace(/\.zfab$|\.zip$/i, "");
+      const isTransparent = document.getElementById("isTransparent").checked;
+      const isDoubleSided = document.getElementById("isDoubleSided").checked;
+
+      let checks = [];
+      let mapDetails = [];
+      let packageFiles = [];
+      let readMode = "none";
+      let detectedMaps = {};
+      let sourceItems = [];
+
+      checks.push(validateFileExtension(file.name));
+      checks.push(validateNaming(baseName));
+
+      const arrayBuffer = await file.arrayBuffer();
+
+      // 1) Try ZIP-based .zfab first. Some .zfab files are normal packages.
+      try {
+        if (!window.JSZip) throw new Error("JSZip library is not loaded. Internet/CDN may be blocked.");
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        packageFiles = Object.keys(zip.files).filter(name => !zip.files[name].dir);
+        const pngFiles = packageFiles.filter(name => name.toLowerCase().endsWith(".png"));
+        sourceItems = pngFiles.map(name => ({ name, kind: "zip", getBlob: () => zip.files[name].async("blob") }));
+        detectedMaps = detectMaps(sourceItems.map(x => x.name));
+        readMode = "ZIP package";
+        checks.push({ item: "Package Readability", result: "PASS", details: "Package opened as ZIP-readable .zfab. Internal file names are available." });
+      } catch (zipErr) {
+        // 2) Fallback: many CLO .zfab files are binary/proprietary but contain embedded PNG data.
+        const embedded = extractEmbeddedPngs(arrayBuffer);
+        packageFiles = embedded.map(x => x.name);
+        sourceItems = embedded.map(x => ({ name: x.name, kind: "embedded", getBlob: () => Promise.resolve(x.blob) }));
+        detectedMaps = detectMaps(sourceItems.map(x => x.name));
+        if (embedded.length) {
+          readMode = "Embedded PNG scan";
+          checks.push({ item: "Package Readability", result: "WARNING", details: `Not ZIP-readable, so the tool used embedded PNG scan mode. ${embedded.length} PNG texture image(s) were found. Internal original file names may not be fully available.` });
+        } else {
+          readMode = "File-name only";
+          checks.push({ item: "Package Readability", result: "WARNING", details: "Unable to inspect internal files. The .zfab may be encrypted/proprietary or textures may not be embedded as PNG. Only file-name validation is available." });
+        }
+      }
+
+      fileList.textContent = packageFiles.length ? (`Read mode: ${readMode}\n\n` + packageFiles.join("\n")) : "No internal PNG or package files detected.";
+
+      checks.push(validateRequiredMaps(detectedMaps, isTransparent));
+      checks.push(validateTextureNameMatch(baseName, sourceItems.map(x => x.name), readMode));
+      checks.push(validateDoubleSided(packageFiles, isDoubleSided));
+
+      mapDetails = await validatePngMaps(sourceItems, detectedMaps);
+      checks.push(validatePngResolutionSummary(mapDetails));
+      checks.push(validatePngDpiSummary(mapDetails));
+      checks.push(validatePhysicalSizeSummary(mapDetails));
+      checks.push(validatePngFormatSummary(mapDetails));
+
+      renderChecks(checks);
+      renderMapDetails(mapDetails);
+      renderGallery(mapDetails);
+      renderScore(checks);
+      currentReport = buildReportRows(checks, mapDetails);
+      downloadCsv.disabled = false;
+    }
+
+    function validateFileExtension(fileName) {
+      const pass = fileName.toLowerCase().endsWith(".zfab");
+      return { item: "File Extension", result: pass ? "PASS" : "FAIL", details: pass ? "File extension is .zfab." : "File must use .zfab extension." };
+    }
+
+    function validateNaming(name) {
+      const issues = [];
+      const approvedFibers = new Set([
+        "Acryl", "Ctn", "Poly", "RecPoly", "Span", "Mod", "Lin", "Lycl", "Lyocl", "Lyol",
+        "Nyln", "Nyln6", "Nyln66", "RecNyln", "PU", "Olfn", "Rayn", "Vsc", "RaynCup",
+        "BCICtn", "PmaCtn", "OrgCtn", "SupCtn", "RecCtn", "RecCotton", "PmaCtn",
+        "Mtl", "Wool", "MixCont"
+      ]);
+
+      if (!/^[A-Za-z]/.test(name)) issues.push("Must start with a letter.");
+      if (!/^[A-Za-z0-9_]+$/.test(name)) issues.push("Only A-Z, a-z, 0-9, and underscore are allowed.");
+      if (/[\s#\/\-\.]/.test(name)) issues.push("No spaces, #, /, -, dots, or % symbols allowed.");
+      if ([...name].some(ch => ch.charCodeAt(0) > 127)) issues.push("English characters only; Unicode is not allowed.");
+      if (name.length > 47) issues.push("Name exceeds 47-character limit.");
+
+      const parts = name.split("_");
+      if (parts.length < 5) {
+        issues.push("Naming structure must be FASID_FabricType_Weightgsm_Content%_FiberAbbreviation, for example FAS1234_Jersey_180gsm_80_10_10_RecCtn_RecPoly_Span.");
+      } else {
+        const fasId = parts[0];
+        const fabricType = parts[1];
+        const weight = parts[2];
+
+        if (!/^FAS[A-Za-z0-9]+$/.test(fasId)) issues.push("FAS ID must start with FAS and contain letters/numbers only.");
+        if (!/^[A-Za-z][A-Za-z0-9]*$/.test(fabricType)) issues.push("Fabric type must be English letters/numbers only, without spaces or symbols.");
+        if (!/^\d+gsm$/.test(weight)) issues.push("Weight must use number + gsm format, for example 180gsm. Do not use oz, plain number, or uppercase GSM.");
+
+        let index = 3;
+        const percentages = [];
+        while (index < parts.length && /^\d+$/.test(parts[index])) {
+          percentages.push(Number(parts[index]));
+          index++;
+        }
+        const fibers = parts.slice(index);
+
+        if (percentages.length === 0) issues.push("At least one content percentage is required, for example 100 or 80_10_10.");
+        if (fibers.length === 0) issues.push("At least one fiber abbreviation is required, for example RecPoly or RecCtn_RecPoly_Span.");
+        if (percentages.length > 0) {
+          const total = percentages.reduce((a,b) => a + b, 0);
+          if (total !== 100) issues.push(`Content percentage total must equal 100. Current total is ${total}.`);
+        }
+        if (percentages.length > 0 && fibers.length > 0 && percentages.length !== fibers.length && !(fibers.length === 1 && fibers[0] === "MixCont")) {
+          issues.push(`Content percentage count must match fiber abbreviation count. Current: ${percentages.length} percentage(s), ${fibers.length} fiber(s).`);
+        }
+        const invalidFibers = fibers.filter(f => !approvedFibers.has(f));
+        if (invalidFibers.length) {
+          issues.push("Fiber abbreviation not in approved list: " + invalidFibers.join(", ") + ". Example: Recycled Cotton = RecCtn, Recycled Polyester = RecPoly, Spandex = Span.");
+        }
+      }
+
+      return {
+        item: "Naming Convention",
+        result: issues.length ? "FAIL" : "PASS",
+        details: issues.length ? issues.join(" ") : "Naming follows Target structure: FASID_FabricType_Weightgsm_Content%_FiberAbbreviation. Example: FAS1234_Jersey_180gsm_80_10_10_RecCtn_RecPoly_Span."
+      };
+    }
+
+    function detectMaps(fileNames) {
+      const detected = {};
+      for (const [map, aliases] of Object.entries(MAP_ALIASES)) {
+        detected[map] = fileNames.filter(file => aliases.some(alias => file.toUpperCase().includes(alias)));
+      }
+      return detected;
+    }
+
+    function validateRequiredMaps(detectedMaps, isTransparent) {
+      const required = [...REQUIRED_MAPS];
+      if (isTransparent) required.push("ALPHA");
+      const missing = required.filter(map => !detectedMaps[map] || detectedMaps[map].length === 0);
+      return { item: "Required Texture Maps", result: missing.length ? "FAIL" : "PASS", details: missing.length ? "Missing map(s): " + missing.join(", ") : "All required maps are detected." };
+    }
+
+    function validateTextureNameMatch(baseName, fileNames, readMode) {
+      if (!fileNames.length) return { item: "Texture Name Match", result: "FAIL", details: "No PNG texture files detected." };
+      if (readMode !== "ZIP package") return { item: "Texture Name Match", result: "WARNING", details: "Original internal texture file names are not fully available in embedded scan mode; name match cannot be fully verified." };
+      const mismatch = fileNames.filter(file => {
+        const justName = file.split("/").pop().replace(/\.png$/i, "");
+        return !justName.startsWith(baseName + "_");
+      });
+      return { item: "Texture Name Match", result: mismatch.length ? "WARNING" : "PASS", details: mismatch.length ? "Some texture names do not start with the .zfab base name: " + mismatch.slice(0, 8).join(", ") : "Texture file names match the .zfab base name." };
+    }
+
+    function validateDoubleSided(packageFiles, isDoubleSided) {
+      if (!isDoubleSided) return { item: "Double-sided Fabric", result: "PASS", details: "Not marked as double-sided." };
+      const names = packageFiles.map(f => f.toUpperCase());
+      const hasFront = names.some(n => n.includes("FRONT") || n.includes("FACE"));
+      const hasBack = names.some(n => n.includes("BACK") || n.includes("BACKSIDE"));
+      return { item: "Double-sided Fabric", result: hasFront && hasBack ? "PASS" : "FAIL", details: hasFront && hasBack ? "Front/face and back texture references detected." : "Double-sided fabric should include front/face and back scans/textures." };
+    }
+
+    async function validatePngMaps(sourceItems, detectedMaps) {
+      const rows = [];
+      const nameToMap = new Map();
+      for (const [map, names] of Object.entries(detectedMaps)) names.forEach(n => nameToMap.set(n, map));
+      const included = sourceItems;
+      for (const item of included) {
+        const map = nameToMap.get(item.name) || "UNKNOWN";
+        try {
+          const blob = await item.getBlob();
+          const buffer = await blob.arrayBuffer();
+          const dpiInfo = readPngDpiFromBuffer(buffer);
+          const dataUrl = URL.createObjectURL(blob);
+          currentImageUrls.push(dataUrl);
+          const img = await loadImage(dataUrl);
+
+          const width = img.width;
+          const height = img.height;
+          const bitDepth = readPngBitDepth(buffer);
+          const dpiX = dpiInfo.dpiX;
+          const dpiY = dpiInfo.dpiY;
+          const hasDpi = Number.isFinite(dpiX) && Number.isFinite(dpiY);
+          const widthIn = hasDpi ? width / dpiX : null;
+          const heightIn = hasDpi ? height / dpiY : null;
+
+          const passRes = width >= 2048 && height >= 2048 && width <= 8192 && height <= 8192;
+          const passDpi = hasDpi && dpiX >= 72 && dpiX <= 1200 && dpiY >= 72 && dpiY <= 1200;
+          const passSize = hasDpi && widthIn >= 4 && heightIn >= 4;
+          const passBit = bitDepth === 8;
+          const finalResult = passRes && passDpi && passSize && passBit ? "PASS" : "FAIL";
+
+          rows.push({
+            map,
+            fileName: item.name,
+            resolution: `${width} x ${height}`,
+            dpi: hasDpi ? `${dpiX.toFixed(0)} x ${dpiY.toFixed(0)}` : "Missing",
+            physicalSize: hasDpi ? `${widthIn.toFixed(2)}\" x ${heightIn.toFixed(2)}\"` : "Cannot calculate",
+            format: bitDepth ? `PNG, ${bitDepth}-bit` : "PNG",
+            resolutionResult: passRes ? "PASS" : "FAIL",
+            dpiResult: passDpi ? "PASS" : "FAIL",
+            sizeResult: passSize ? "PASS" : "FAIL",
+            formatResult: passBit ? "PASS" : "FAIL",
+            result: finalResult,
+            imageUrl: dataUrl
+          });
+        } catch (e) {
+          rows.push({ map, fileName: item.name, resolution: "Unreadable", dpi: "Unreadable", physicalSize: "Unreadable", format: "PNG", resolutionResult: "FAIL", dpiResult: "FAIL", sizeResult: "FAIL", formatResult: "FAIL", result: "FAIL", imageUrl: "" });
+        }
+      }
+      return rows;
+    }
+
+    function extractEmbeddedPngs(arrayBuffer) {
+      const bytes = new Uint8Array(arrayBuffer);
+      const sig = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+      const out = [];
+      for (let i = 0; i < bytes.length - 8; i++) {
+        let match = true;
+        for (let j = 0; j < sig.length; j++) if (bytes[i+j] !== sig[j]) { match = false; break; }
+        if (!match) continue;
+        const end = findPngEnd(bytes, i);
+        if (end > i) {
+          const blob = new Blob([bytes.slice(i, end)], { type: "image/png" });
+          const context = getAsciiContext(bytes, Math.max(0, i - 1000), i + 200);
+          const inferred = inferMapName(context, out.length + 1);
+          out.push({ name: inferred, blob });
+          i = end - 1;
+        }
+      }
+      return out;
+    }
+
+    function findPngEnd(bytes, start) {
+      let offset = start + 8;
+      while (offset + 12 <= bytes.length) {
+        const length = ((bytes[offset]<<24) | (bytes[offset+1]<<16) | (bytes[offset+2]<<8) | bytes[offset+3]) >>> 0;
+        const type = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+        const next = offset + 12 + length;
+        if (type === "IEND") return next;
+        if (next <= offset || next > bytes.length) return -1;
+        offset = next;
+      }
+      return -1;
+    }
+
+    function getAsciiContext(bytes, start, end) {
+      let s = "";
+      for (let i = start; i < Math.min(end, bytes.length); i++) {
+        const b = bytes[i];
+        s += (b >= 32 && b <= 126) ? String.fromCharCode(b) : " ";
+      }
+      return s;
+    }
+
+    function inferMapName(context, index) {
+      const upper = context.toUpperCase();
+      for (const [map, aliases] of Object.entries(MAP_ALIASES)) {
+        if (aliases.some(a => upper.includes(a) || upper.includes(a.replace("_", "")))) {
+          return `Embedded_${String(index).padStart(2,"0")}_${map}.png`;
+        }
+      }
+      return `Embedded_${String(index).padStart(2,"0")}_UNKNOWN.png`;
+    }
+
+    function readPngDpiFromBuffer(buffer) {
+      const view = new DataView(buffer);
+      const signature = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+      for (let i = 0; i < signature.length; i++) if (view.getUint8(i) !== signature[i]) return { dpiX: NaN, dpiY: NaN };
+      let offset = 8;
+      while (offset + 12 <= view.byteLength) {
+        const length = view.getUint32(offset);
+        const type = String.fromCharCode(view.getUint8(offset+4), view.getUint8(offset+5), view.getUint8(offset+6), view.getUint8(offset+7));
+        if (type === "pHYs" && length >= 9) {
+          const pixelsPerMeterX = view.getUint32(offset + 8);
+          const pixelsPerMeterY = view.getUint32(offset + 12);
+          const unit = view.getUint8(offset + 16);
+          if (unit === 1) return { dpiX: pixelsPerMeterX * 0.0254, dpiY: pixelsPerMeterY * 0.0254 };
+          return { dpiX: NaN, dpiY: NaN };
+        }
+        offset += 12 + length;
+      }
+      return { dpiX: NaN, dpiY: NaN };
+    }
+
+    function readPngBitDepth(buffer) {
+      try {
+        const view = new DataView(buffer);
+        // PNG IHDR starts after signature. Length 4 + type 4, bit depth at byte 24 from start.
+        const type = String.fromCharCode(view.getUint8(12), view.getUint8(13), view.getUint8(14), view.getUint8(15));
+        if (type !== "IHDR") return null;
+        return view.getUint8(24);
+      } catch { return null; }
+    }
+
+    function loadImage(url) {
+      return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = url; });
+    }
+
+    function validatePngResolutionSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "PNG Resolution", result: "FAIL", details: "No readable PNG texture maps found." };
+      const failed = mapDetails.filter(row => row.resolutionResult === "FAIL");
+      return { item: "PNG Resolution", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} PNG file(s) outside 2048–8192 px range or unreadable.` : "All readable PNG maps are within 2048–8192 px range." };
+    }
+
+    function validatePngDpiSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "PNG DPI", result: "FAIL", details: "No readable PNG texture maps found." };
+      const failed = mapDetails.filter(row => row.dpiResult === "FAIL");
+      return { item: "PNG DPI", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} PNG file(s) missing DPI metadata or outside 72–1200 DPI range.` : "All readable PNG maps are within 72–1200 DPI range." };
+    }
+
+    function validatePhysicalSizeSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "Physical Size", result: "FAIL", details: "No readable PNG texture maps found." };
+      const failed = mapDetails.filter(row => row.sizeResult === "FAIL");
+      return { item: "Physical Size", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} PNG file(s) below 4\" x 4\" minimum size or cannot be calculated due to missing DPI.` : "All readable PNG maps meet the 4\" x 4\" minimum size." };
+    }
+
+    function validatePngFormatSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "PNG Format", result: "FAIL", details: "No PNG texture maps found." };
+      const failed = mapDetails.filter(row => row.formatResult === "FAIL");
+      return { item: "PNG Format", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} PNG file(s) are not 8-bit or unreadable.` : "All detected texture PNG files are 8-bit." };
+    }
+
+    function renderChecks(checks) {
+      resultsBody.innerHTML = checks.map(row => `<tr><td>${escapeHtml(row.item)}</td><td class="${classFor(row.result)}">${row.result}</td><td>${escapeHtml(row.details)}</td></tr>`).join("");
+    }
+
+    function renderMapDetails(rows) {
+      if (!rows.length) { mapBody.innerHTML = `<tr><td colspan="7" class="small">No texture maps detected or package is not readable.</td></tr>`; return; }
+      mapBody.innerHTML = rows.map(row => `<tr><td>${escapeHtml(row.map)}</td><td>${escapeHtml(row.fileName)}</td><td class="${classFor(row.resolutionResult)}">${escapeHtml(row.resolution)}</td><td class="${classFor(row.dpiResult)}">${escapeHtml(row.dpi)}</td><td class="${classFor(row.sizeResult)}">${escapeHtml(row.physicalSize)}</td><td class="${classFor(row.formatResult || 'PASS')}">${escapeHtml(row.format)}</td><td class="${classFor(row.result)}">${row.result}</td></tr>`).join("");
+    }
+
+
+    function renderGallery(rows) {
+      if (!rows.length) {
+        gallery.innerHTML = `<div class="small">No texture map preview available.</div>`;
+        return;
+      }
+      gallery.innerHTML = rows.map((row, idx) => {
+        if (!row.imageUrl) return "";
+        return `<div class="map-card">
+          <img src="${row.imageUrl}" alt="${escapeHtml(row.map)} preview" data-index="${idx}" />
+          <div class="meta">
+            <strong>${escapeHtml(row.map)}</strong><br />
+            ${escapeHtml(row.fileName)}<br />
+            ${escapeHtml(row.resolution)} | DPI: ${escapeHtml(row.dpi)} | Size: ${escapeHtml(row.physicalSize)}
+          </div>
+        </div>`;
+      }).join("");
+      gallery.querySelectorAll("img").forEach(img => {
+        img.addEventListener("click", () => {
+          const row = rows[Number(img.dataset.index)];
+          showModal(row.imageUrl, `${row.map} — ${row.fileName}`);
+        });
+      });
+    }
+
+    function showModal(url, title) {
+      modalImg.src = url;
+      modalTitle.textContent = title;
+      modal.classList.add("show");
+      panX = 0;
+      panY = 0;
+      zoomScale = 1;
+      modalImg.onload = () => fitImageToCanvas();
+    }
+
+    function hideModal() {
+      modal.classList.remove("show");
+      modalImg.src = "";
+      modalImg.onload = null;
+      panX = 0;
+      panY = 0;
+      zoomScale = 1;
+    }
+
+    function fitImageToCanvas() {
+      if (!modalImg.naturalWidth || !modalCanvas.clientWidth) return;
+      const scaleX = modalCanvas.clientWidth / modalImg.naturalWidth;
+      const scaleY = modalCanvas.clientHeight / modalImg.naturalHeight;
+      fitScale = Math.min(scaleX, scaleY, 1);
+      zoomScale = fitScale;
+      panX = 0;
+      panY = 0;
+      applyZoom();
+    }
+
+    function setZoomPercent(percent, keepPan = true) {
+      const clamped = Math.max(25, Math.min(800, percent));
+      zoomScale = clamped / 100;
+      if (!keepPan) { panX = 0; panY = 0; }
+      applyZoom();
+    }
+
+    function applyZoom() {
+      const percent = Math.round(zoomScale * 100);
+      zoomRange.value = String(Math.max(25, Math.min(800, percent)));
+      zoomValue.textContent = percent + "%";
+      modalImg.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoomScale})`;
+    }
+
+    function cleanupImageUrls() {
+      currentImageUrls.forEach(url => URL.revokeObjectURL(url));
+      currentImageUrls = [];
+    }
+
+    function renderScore(checks) {
+      let score = 100;
+      checks.forEach(c => { if (c.result === "FAIL") score -= 14; if (c.result === "WARNING") score -= 6; });
+      score = Math.max(0, score);
+      scoreEl.textContent = score + "/100";
+      let status = "PASS", cls = "pass";
+      if (checks.some(c => c.result === "FAIL")) { status = "FAIL"; cls = "fail"; }
+      else if (checks.some(c => c.result === "WARNING")) { status = "WARNING"; cls = "warn"; }
+      statusEl.textContent = status;
+      statusEl.className = "status " + cls;
+      summaryEl.textContent = status === "PASS" ? "File meets the first-version QA validation scope." : "File requires correction before submission or internal release.";
+    }
+
+    function buildReportRows(checks, maps) {
+      const rows = [["Type", "Item", "Result", "Details"]];
+      checks.forEach(c => rows.push(["Validation", c.item, c.result, c.details]));
+      maps.forEach(m => rows.push(["Texture Map", m.map, m.result, `${m.fileName} | ${m.resolution} | DPI: ${m.dpi} | Size: ${m.physicalSize} | ${m.format}`]));
+      return rows;
+    }
+
+    function exportCsv() {
+      const csv = currentReport.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Target_Digital_Fabric_QA_Report.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetAll() {
+      cleanupImageUrls();
+      hideModal();
+      window.lastFile = null; fileInput.value = ""; currentReport = [];
+      fileList.textContent = "No file loaded.";
+      resultsBody.innerHTML = `<tr><td colspan="3" class="small">No validation results yet.</td></tr>`;
+      mapBody.innerHTML = `<tr><td colspan="7" class="small">No texture maps detected yet.</td></tr>`;
+      gallery.innerHTML = `<div class="small">No texture map preview yet.</div>`;
+      scoreEl.textContent = "--"; statusEl.textContent = "NO FILE"; statusEl.className = "status warn";
+      summaryEl.textContent = "Upload a .zfab file to start validation."; downloadCsv.disabled = true;
+    }
+
+    function classFor(result) { if (result === "PASS") return "pass-text"; if (result === "FAIL") return "fail-text"; return "warn-text"; }
+    function escapeHtml(str) { return String(str).replace(/[&<>'"]/g, tag => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[tag])); }
+  </script>
+</body>
+</html>

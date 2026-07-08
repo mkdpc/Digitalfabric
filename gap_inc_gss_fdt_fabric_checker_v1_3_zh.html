@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GAP Inc GSS FDT 布料檢查工具 v1.3</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f8ff;
+      --card: #ffffff;
+      --text: #1e3a5f;
+      --muted: #6b7280;
+      --border: #cfe0f5;
+      --pass: #2563eb;
+      --fail: #b91c1c;
+      --warn: #b45309;
+      --primary: #1d4ed8;
+      --accent: #3b82f6;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 28px 32px;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    header p {
+      margin: 0;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .full { grid-column: 1 / -1; }
+    .dropzone {
+      border: 2px dashed #9ca3af;
+      border-radius: 14px;
+      padding: 34px;
+      text-align: center;
+      background: #fafafa;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--accent);
+      background: #f3f4f6;
+    }
+    input[type="file"] { display: none; }
+    select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: white;
+      color: var(--text);
+    }
+    .options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 18px;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    h3 {
+      margin: 18px 0 10px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+    .score {
+      font-size: 46px;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .status.pass { background: var(--pass); }
+    .status.fail { background: var(--fail); }
+    .status.warn { background: var(--warn); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f9fafb;
+      color: #374151;
+    }
+    .pass-text { color: var(--pass); font-weight: 700; }
+    .fail-text { color: var(--fail); font-weight: 700; }
+    .warn-text { color: var(--warn); font-weight: 700; }
+    .small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 10px;
+    }
+    .btn.secondary { background: #60a5fa; }
+    .file-list {
+      max-height: 260px;
+      overflow: auto;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .map-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .map-card img {
+      width: 100%;
+      height: 260px;
+      object-fit: contain;
+      background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 24px 24px;
+      cursor: zoom-in;
+      display: block;
+    }
+    .map-card .meta {
+      padding: 10px 12px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      background: rgba(0,0,0,0.86);
+      padding: 24px;
+    }
+    .modal.show { display: flex; flex-direction: column; }
+    .modal-toolbar {
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .modal-title-wrap {
+      min-width: 260px;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .modal-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .modal-toolbar button {
+      background: white;
+      color: #111827;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .modal-toolbar input[type="range"] {
+      width: 180px;
+    }
+    #zoomValue {
+      min-width: 56px;
+      text-align: right;
+      font-weight: 700;
+    }
+    .modal-canvas {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      border-radius: 10px;
+      background: repeating-conic-gradient(#303030 0% 25%, #202020 0% 50%) 50% / 32px 32px;
+      cursor: grab;
+      min-height: 300px;
+    }
+    .modal-canvas.dragging { cursor: grabbing; }
+    .modal img {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      max-width: none;
+      max-height: none;
+      transform-origin: center center;
+      image-rendering: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .modal-help {
+      color: #d1d5db;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GAP Inc GSS FDT 布料檢查工具 v1.3</h1>
+    <p>依 GAP Inc GSS FDT 規範建立的本機瀏覽器檢查工具。可檢查最終檔案格式、布料檔名、6 張 PBR texture maps、貼圖命名、PNG 300 DPI 與 8-bit 色深。</p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <section class="card full">
+        <h2>上傳數位布料檔案</h2>
+        <div id="dropzone" class="dropzone">
+          <strong>將 .zfab 檔案拖曳到此處</strong><br />
+          <span class="small">或點擊選擇檔案</span>
+          <input id="fileInput" type="file" accept=".zfab,.zip" />
+        </div>
+        <div class="options">
+          <span class="small">檢查重點：布料檔名需為 RD+數字，且 PNG DPI 只能為 300。</span>
+        </div>
+        <p class="small">說明：工具會先嘗試以 ZIP 方式讀取封裝；若無法直接讀取，會改為掃描內嵌 PNG，並在可辨識範圍內進行檢查。</p>
+        <p class="small"><strong>GAP Inc 檢查範圍：</strong> 最終檔名需為 RD+數字。Texture maps 命名需符合 RDNumber_(SurfaceLayer_)TextureMapName，SurfaceLayer 可省略。例如：RD303924_Base 或 RD303924_Front_Base。TextureMapName 需為：Base、Nrm、Disp、Alpha、Rough、MTL。</p>
+        <p class="small"><strong>仍需人工確認：</strong> 無縫拼接、經緯向、布面平整乾淨、無髒污／皺摺／陰影，以及 3D 垂墜效果是否正確，無法僅靠瀏覽器自動判定。</p>
+      </section>
+
+      <section class="card">
+        <h2>檢查分數</h2>
+        <div id="score" class="score">--</div>
+        <div id="overallStatus" class="status warn">未載入檔案</div>
+        <p id="summary" class="small">請上傳 .zfab 檔案開始檢查。</p>
+        <button class="btn" id="downloadCsv" disabled>匯出 CSV 報告</button>
+        <button class="btn secondary" id="resetBtn">重設</button>
+      </section>
+
+      <section class="card">
+        <h2>偵測到的封裝檔案</h2>
+        <div id="fileList" class="file-list">尚未載入檔案。</div>
+      </section>
+
+      <section class="card full">
+        <h2>檢查結果</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 22%;">檢查項目</th>
+              <th style="width: 12%;">結果</th>
+              <th>說明</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="3" class="small">尚無檢查結果。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card full">
+        <h2>Texture Map 明細</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Map</th>
+              <th>檔名</th>
+              <th>解析度</th>
+              <th>DPI</th>
+              <th>格式</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody id="mapBody">
+            <tr><td colspan="6" class="small">尚未偵測到 texture maps。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card full">
+        <h2>Texture Map 預覽</h2>
+        <p class="small">點擊任一 map 可放大檢視，方便人工確認是否有不自然紋理、明顯皺摺、陰影、髒污或其他掃描異常。</p>
+        <div id="mapGallery" class="gallery-grid"><div class="small">尚無 texture map 預覽。</div></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="imageModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-toolbar">
+      <div class="modal-title-wrap">
+        <div id="modalTitle">Texture map 預覽</div>
+        <div class="modal-help">滑鼠滾輪可縮放｜拖曳可平移｜可用「原始大小」檢查皺摺或異常點</div>
+      </div>
+      <div class="modal-tools">
+        <button id="zoomOutBtn" type="button">−</button>
+        <input id="zoomRange" type="range" min="25" max="800" value="100" step="25" />
+        <span id="zoomValue">100%</span>
+        <button id="zoomInBtn" type="button">+</button>
+        <button id="fitBtn" type="button">適合畫面</button>
+        <button id="actualBtn" type="button">原始大小</button>
+        <button id="closeModal" type="button">關閉</button>
+      </div>
+    </div>
+    <div id="modalCanvas" class="modal-canvas">
+      <img id="modalImg" alt="Large texture map preview" />
+    </div>
+  </div>
+
+  <script>
+    const REQUIRED_MAPS = ["BASE", "NRM", "DISP", "ALPHA", "ROUGH", "MTL"];
+    const MAP_DISPLAY = {
+      BASE: "Base Map",
+      NRM: "Normal Map",
+      DISP: "Displacement Map",
+      ALPHA: "Alpha Map",
+      ROUGH: "Roughness Map",
+      MTL: "Metalness Map",
+      SPEC: "Specular map"
+    };
+    const MAP_ALIASES = {
+      BASE: ["_BASE", "_DIFFUSE", "_COL", "_COLOR", "_ALBEDO"],
+      NRM: ["_NRM", "_NORMAL"],
+      DISP: ["_DISP", "_DISPLACEMENT"],
+      ALPHA: ["_ALPHA", "_OPACITY"],
+      ROUGH: ["_ROUGH", "_ROUGHNESS"],
+      MTL: ["_MTL", "_METAL", "_METALNESS", "_METALLIC"],
+      SPEC: ["_SPEC", "_SPECULAR"]
+    };
+
+    let currentReport = [];
+    let currentImageUrls = [];
+    let zoomScale = 1;
+    let fitScale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const resultsBody = document.getElementById("resultsBody");
+    const mapBody = document.getElementById("mapBody");
+    const fileList = document.getElementById("fileList");
+    const scoreEl = document.getElementById("score");
+    const statusEl = document.getElementById("overallStatus");
+    const summaryEl = document.getElementById("summary");
+    const downloadCsv = document.getElementById("downloadCsv");
+    const resetBtn = document.getElementById("resetBtn");
+    const gallery = document.getElementById("mapGallery");
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImg");
+    const modalCanvas = document.getElementById("modalCanvas");
+    const modalTitle = document.getElementById("modalTitle");
+    const closeModal = document.getElementById("closeModal");
+    const zoomRange = document.getElementById("zoomRange");
+    const zoomValue = document.getElementById("zoomValue");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const fitBtn = document.getElementById("fitBtn");
+    const actualBtn = document.getElementById("actualBtn");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
+
+    dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("dragover"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+    dropzone.addEventListener("drop", e => { e.preventDefault(); dropzone.classList.remove("dragover"); handleFile(e.dataTransfer.files[0]); });
+    resetBtn.addEventListener("click", resetAll);
+    downloadCsv.addEventListener("click", exportCsv);
+    closeModal.addEventListener("click", hideModal);
+    modal.addEventListener("click", e => { if (e.target === modal) hideModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") hideModal(); });
+
+    zoomInBtn.addEventListener("click", () => setZoomPercent(Math.round(zoomScale * 100) + 25));
+    zoomOutBtn.addEventListener("click", () => setZoomPercent(Math.round(zoomScale * 100) - 25));
+    zoomRange.addEventListener("input", () => setZoomPercent(Number(zoomRange.value)));
+    fitBtn.addEventListener("click", fitImageToCanvas);
+    actualBtn.addEventListener("click", () => setZoomPercent(100, false));
+
+    modalCanvas.addEventListener("wheel", e => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 25 : -25;
+      setZoomPercent(Math.round(zoomScale * 100) + delta);
+    }, { passive: false });
+
+    modalCanvas.addEventListener("mousedown", e => {
+      isDragging = true;
+      modalCanvas.classList.add("dragging");
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      panStartX = panX;
+      panStartY = panY;
+    });
+
+    window.addEventListener("mousemove", e => {
+      if (!isDragging) return;
+      panX = panStartX + (e.clientX - dragStartX);
+      panY = panStartY + (e.clientY - dragStartY);
+      applyZoom();
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false;
+      modalCanvas.classList.remove("dragging");
+    });
+
+    window.addEventListener("resize", () => {
+      if (modal.classList.contains("show")) applyZoom();
+    });
+
+    async function handleFile(file) {
+      if (!file) return;
+      window.lastFile = file;
+      currentReport = [];
+      cleanupImageUrls();
+      const baseName = file.name.replace(/\.zfab$|\.u3ma$|\.zip$/i, "");
+
+      let checks = [];
+      let mapDetails = [];
+      let packageFiles = [];
+      let readMode = "none";
+      let detectedMaps = {};
+      let sourceItems = [];
+
+      checks.push(validateFileExtension(file.name));
+      checks.push(validateFinalNaming(baseName));
+
+      const arrayBuffer = await file.arrayBuffer();
+
+      // 1) Try ZIP-based .zfab first. Some .zfab files are normal packages.
+      try {
+        if (!window.JSZip) throw new Error("JSZip library is not loaded. Internet/CDN may be blocked.");
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        packageFiles = Object.keys(zip.files).filter(name => !zip.files[name].dir);
+        const pngFiles = packageFiles.filter(name => name.toLowerCase().endsWith(".png"));
+        sourceItems = pngFiles.map(name => ({ name, kind: "zip", getBlob: () => zip.files[name].async("blob") }));
+        detectedMaps = detectMaps(sourceItems.map(x => x.name));
+        readMode = "ZIP package";
+      } catch (zipErr) {
+        // 2) Fallback: many CLO .zfab files are binary/proprietary but contain embedded PNG data.
+        const embedded = extractEmbeddedPngs(arrayBuffer);
+        packageFiles = embedded.map(x => x.name);
+        sourceItems = embedded.map(x => ({ name: x.name, kind: "embedded", getBlob: () => Promise.resolve(x.blob) }));
+        detectedMaps = detectMaps(sourceItems.map(x => x.name));
+        if (embedded.length) {
+          readMode = "Embedded PNG scan";
+        } else {
+          readMode = "File-name only";
+        }
+      }
+
+      fileList.textContent = packageFiles.length ? (`讀取模式：${readMode}\n\n` + packageFiles.join("\n")) : "未偵測到內部 PNG 或封裝檔案。";
+
+      checks.push(validateRequiredMaps(detectedMaps));
+      checks.push(validateTextureMapNaming(baseName, sourceItems.map(x => x.name), detectedMaps, readMode));
+
+      mapDetails = await validatePngMaps(sourceItems, detectedMaps);
+      checks.push(validatePngDpiSummary(mapDetails));
+      checks.push(validatePngFormatSummary(mapDetails));
+
+      renderChecks(checks);
+      renderMapDetails(mapDetails);
+      renderGallery(mapDetails);
+      renderScore(checks);
+      currentReport = buildReportRows(checks, mapDetails);
+      downloadCsv.disabled = false;
+    }
+
+    function validateFileExtension(fileName) {
+      const lower = fileName.toLowerCase();
+      const pass = lower.endsWith(".zfab");
+      const zipOnly = lower.endsWith(".zip");
+      return {
+        item: "最終檔案格式",
+        result: pass ? "PASS" : "FAIL",
+        details: pass
+          ? "最終數位布料格式正確，副檔名為 .zfab。"
+          : zipOnly
+            ? "雖可讀取 ZIP，但最終提交格式仍必須為 .zfab。"
+            : "最終提交格式必須為 .zfab。"
+      };
+    }
+
+    function validateFinalNaming(name) {
+      const pass = /^RD\d+$/i.test(name);
+      return {
+        item: "布料檔名",
+        result: pass ? "PASS" : "FAIL",
+        details: pass ? "布料檔名符合規則：RD+數字。" : "布料檔名需為 RD+數字，例如 RD123456。"
+      };
+    }
+
+    function validateAccreditationNaming(name) {
+      const pattern = /_Accreditation\s+(1st|2nd)\s+Batch_\d{2}[A-Z]{3}\d{2}_[A-Za-z0-9]+/i;
+      const pass = pattern.test(name);
+      return {
+        item: "Accreditation 批次命名",
+        result: pass ? "PASS" : "FAIL",
+        details: pass
+          ? "已偵測到 Accreditation 批次命名。"
+          : "若為 accreditation submission，請加上：_Accreditation 1st Batch_DDMMMYY_Millname 或 _Accreditation 2nd Batch_DDMMMYY_Millname。例如：RD292336-Jersey Piece Dye_Accreditation 1st Batch_01FEB23_Millname.zfab。"
+      };
+    }
+
+    function detectMaps(fileNames) {
+      const detected = {};
+      for (const [map, aliases] of Object.entries(MAP_ALIASES)) {
+        detected[map] = fileNames.filter(file => {
+          const upper = file.toUpperCase().replace(/\.PNG$/i, "");
+          return aliases.some(alias => upper.endsWith(alias) || upper.includes(alias + ".") || upper.includes(alias + "_"));
+        });
+      }
+      return detected;
+    }
+
+    function validateRequiredMaps(detectedMaps) {
+      const missing = REQUIRED_MAPS.filter(map => !detectedMaps[map] || detectedMaps[map].length === 0);
+      const requiredText = REQUIRED_MAPS.map(m => `${m} (${MAP_DISPLAY[m]})`).join(", ");
+      return {
+        item: "6 張必要 PBR Texture Maps",
+        result: missing.length ? "FAIL" : "PASS",
+        details: missing.length
+          ? "缺少 GAP Inc 必要 map：" + missing.map(m => `${m} (${MAP_DISPLAY[m]})`).join(", ") + `。必須包含：${requiredText}.`
+          : "已偵測到 GAP Inc 要求的 6 張 PBR maps：Base、Normal、Displacement、Alpha、Roughness、Metalness。"
+      };
+    }
+
+    function validateTextureMapNaming(baseName, fileNames, detectedMaps, readMode) {
+      if (!fileNames.length) return { item: "Texture Map 命名", result: "FAIL", details: "未偵測到 PNG texture files。" };
+      if (readMode !== "ZIP package") return { item: "Texture Map 命名", result: "WARNING", details: "使用內嵌 PNG 掃描模式時，無法完整取得原始內部檔名，因此無法完全驗證 GAP map 命名。" };
+
+      const rd = (baseName.match(/^RD\d+/i) || [""])[0].toUpperCase();
+      const textureNames = [...new Set(Object.entries(detectedMaps).flatMap(([map, names]) => REQUIRED_MAPS.includes(map) || map === "SPEC" ? names : []))];
+      const bad = [];
+      const rdMismatch = [];
+
+      textureNames.forEach(file => {
+        const justName = file.split("/").pop().replace(/\.png$/i, "");
+        const upper = justName.toUpperCase();
+        // Format: RDNumber_(SurfaceLayer_)TextureMapName — SurfaceLayer is optional
+        // Valid: RD1068289_BASE  |  RD303924_Front_Base
+        // SurfaceLayer must start with a letter (e.g. Front, Back) — no trailing numbers allowed
+        if (!/^RD\d+(_[A-Za-z][A-Za-z0-9]*)?_(BASE|NRM|DISP|ALPHA|ROUGH|MTL|SPEC)$/i.test(upper)) bad.push(justName);
+        if (rd && !upper.startsWith(rd + "_")) rdMismatch.push(justName);
+      });
+
+      if (bad.length || rdMismatch.length) {
+        const details = [];
+        if (bad.length) details.push("Texture map 檔名需符合 RDNumber_(SurfaceLayer_)TextureMapName，SurfaceLayer 可省略。例如：RD303924_Base 或 RD303924_Front_Base。TextureMapName 需為：Base、Nrm、Disp、Alpha、Rough、MTL。異常檔案：" + bad.slice(0, 8).join(", "));
+        if (rdMismatch.length) details.push("Texture map 的 RD number 應與最終數位布料檔案一致。不一致檔案：" + rdMismatch.slice(0, 8).join(", "));
+        return { item: "Texture Map 命名", result: "FAIL", details: details.join(" ") };
+      }
+      return { item: "Texture Map 命名", result: "PASS", details: "Texture maps 命名符合 GAP Inc 規則：RDNumber_(SurfaceLayer_)TextureMapName，SurfaceLayer 可省略。例如：RD303924_Base 或 RD303924_Front_Base。" };
+    }
+
+    function validateBackSide(packageFiles, backDifferent, readMode) {
+      if (!backDifferent) return { item: "正反面設定", result: "PASS", details: "若背面與正面相同，僅使用正面設定即可。" };
+      if (readMode !== "ZIP package") return { item: "正反面設定", result: "WARNING", details: "已勾選背面不同，但在內嵌 PNG 掃描模式下無法完整驗證原始封裝檔名。" };
+      const names = packageFiles.map(f => f.toUpperCase());
+      const hasFront = names.some(n => n.includes("_FRONT_") || n.includes("FRONT") || n.includes("FACE"));
+      const hasBack = names.some(n => n.includes("_BACK_") || n.includes("BACK") || n.includes("BACKSIDE"));
+      return { item: "正反面設定", result: hasFront && hasBack ? "PASS" : "FAIL", details: hasFront && hasBack ? "已偵測到正面與背面 texture 參照。" : "若背面與正面不同，GAP Inc SOP 要求提供正反面 texture surface，且需對應正確的 map 與 render 結果。" };
+    }
+
+    function validateRgb165Confirmation(rgb165Confirmed) {
+      return {
+        item: "Base Map RGB165 確認",
+        result: rgb165Confirmed ? "PASS" : "WARNING",
+        details: rgb165Confirmed
+          ? "已確認 Base Map 已於 CLO / V-Stitcher 轉為 RGB165。"
+          : "GAP Inc SOP 要求 Base Map 需轉為 RGB165。此項無法僅由 PNG metadata 自動可靠判定，請於 CLO / V-Stitcher 確認後再勾選。"
+      };
+    }
+
+    async function validatePngMaps(sourceItems, detectedMaps) {
+      const rows = [];
+      const nameToMap = new Map();
+      for (const [map, names] of Object.entries(detectedMaps)) names.forEach(n => nameToMap.set(n, map));
+      const included = sourceItems;
+      for (const item of included) {
+        const map = nameToMap.get(item.name) || "UNKNOWN";
+        try {
+          const blob = await item.getBlob();
+          const buffer = await blob.arrayBuffer();
+          const dpiInfo = readPngDpiFromBuffer(buffer);
+          const dataUrl = URL.createObjectURL(blob);
+          currentImageUrls.push(dataUrl);
+          const img = await loadImage(dataUrl);
+
+          const width = img.width;
+          const height = img.height;
+          const bitDepth = readPngBitDepth(buffer);
+          const dpiX = dpiInfo.dpiX;
+          const dpiY = dpiInfo.dpiY;
+          const hasDpi = Number.isFinite(dpiX) && Number.isFinite(dpiY);
+          const widthIn = hasDpi ? width / dpiX : null;
+          const heightIn = hasDpi ? height / dpiY : null;
+
+          const passRes = width > 0 && height > 0;
+          const passDpi = hasDpi && Math.abs(dpiX - 300) <= 5 && Math.abs(dpiY - 300) <= 5;
+          const passSize = true; // GAP actual scale / grain direction requires manual visual QA; physical size is shown for reference only.
+          const passBit = bitDepth === 8;
+          const finalResult = passRes && passDpi && passBit ? "PASS" : "FAIL";
+
+          rows.push({
+            map: MAP_DISPLAY[map] || map,
+            fileName: item.name,
+            resolution: `${width} x ${height}`,
+            dpi: hasDpi ? `${dpiX.toFixed(0)} x ${dpiY.toFixed(0)}` : "Missing",
+            physicalSize: hasDpi ? `${widthIn.toFixed(2)}\" x ${heightIn.toFixed(2)}\"` : "Cannot calculate",
+            format: bitDepth ? `PNG, ${bitDepth}-bit` : "PNG",
+            resolutionResult: passRes ? "PASS" : "FAIL",
+            dpiResult: passDpi ? "PASS" : "FAIL",
+            sizeResult: passSize ? "PASS" : "FAIL",
+            formatResult: passBit ? "PASS" : "FAIL",
+            result: finalResult,
+            imageUrl: dataUrl
+          });
+        } catch (e) {
+          rows.push({ map, fileName: item.name, resolution: "Unreadable", dpi: "Unreadable", physicalSize: "Unreadable", format: "PNG", resolutionResult: "FAIL", dpiResult: "FAIL", sizeResult: "FAIL", formatResult: "FAIL", result: "FAIL", imageUrl: "" });
+        }
+      }
+      return rows;
+    }
+
+    function extractEmbeddedPngs(arrayBuffer) {
+      const bytes = new Uint8Array(arrayBuffer);
+      const sig = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+      const out = [];
+      for (let i = 0; i < bytes.length - 8; i++) {
+        let match = true;
+        for (let j = 0; j < sig.length; j++) if (bytes[i+j] !== sig[j]) { match = false; break; }
+        if (!match) continue;
+        const end = findPngEnd(bytes, i);
+        if (end > i) {
+          const blob = new Blob([bytes.slice(i, end)], { type: "image/png" });
+          const context = getAsciiContext(bytes, Math.max(0, i - 1000), i + 200);
+          const inferred = inferMapName(context, out.length + 1);
+          out.push({ name: inferred, blob });
+          i = end - 1;
+        }
+      }
+      return out;
+    }
+
+    function findPngEnd(bytes, start) {
+      let offset = start + 8;
+      while (offset + 12 <= bytes.length) {
+        const length = ((bytes[offset]<<24) | (bytes[offset+1]<<16) | (bytes[offset+2]<<8) | bytes[offset+3]) >>> 0;
+        const type = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+        const next = offset + 12 + length;
+        if (type === "IEND") return next;
+        if (next <= offset || next > bytes.length) return -1;
+        offset = next;
+      }
+      return -1;
+    }
+
+    function getAsciiContext(bytes, start, end) {
+      let s = "";
+      for (let i = start; i < Math.min(end, bytes.length); i++) {
+        const b = bytes[i];
+        s += (b >= 32 && b <= 126) ? String.fromCharCode(b) : " ";
+      }
+      return s;
+    }
+
+    function inferMapName(context, index) {
+      const upper = context.toUpperCase();
+      for (const [map, aliases] of Object.entries(MAP_ALIASES)) {
+        if (aliases.some(a => upper.includes(a) || upper.includes(a.replace("_", "")))) {
+          return `Embedded_${String(index).padStart(2,"0")}_${map}.png`;
+        }
+      }
+      return `Embedded_${String(index).padStart(2,"0")}_UNKNOWN.png`;
+    }
+
+    function readPngDpiFromBuffer(buffer) {
+      const view = new DataView(buffer);
+      const signature = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+      for (let i = 0; i < signature.length; i++) if (view.getUint8(i) !== signature[i]) return { dpiX: NaN, dpiY: NaN };
+      let offset = 8;
+      while (offset + 12 <= view.byteLength) {
+        const length = view.getUint32(offset);
+        const type = String.fromCharCode(view.getUint8(offset+4), view.getUint8(offset+5), view.getUint8(offset+6), view.getUint8(offset+7));
+        if (type === "pHYs" && length >= 9) {
+          const pixelsPerMeterX = view.getUint32(offset + 8);
+          const pixelsPerMeterY = view.getUint32(offset + 12);
+          const unit = view.getUint8(offset + 16);
+          if (unit === 1) return { dpiX: pixelsPerMeterX * 0.0254, dpiY: pixelsPerMeterY * 0.0254 };
+          return { dpiX: NaN, dpiY: NaN };
+        }
+        offset += 12 + length;
+      }
+      return { dpiX: NaN, dpiY: NaN };
+    }
+
+    function readPngBitDepth(buffer) {
+      try {
+        const view = new DataView(buffer);
+        // PNG IHDR starts after signature. Length 4 + type 4, bit depth at byte 24 from start.
+        const type = String.fromCharCode(view.getUint8(12), view.getUint8(13), view.getUint8(14), view.getUint8(15));
+        if (type !== "IHDR") return null;
+        return view.getUint8(24);
+      } catch { return null; }
+    }
+
+    function loadImage(url) {
+      return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = url; });
+    }
+
+    function validatePngResolutionSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "PNG 可讀性 / 像素尺寸", result: "FAIL", details: "未找到可讀取的 PNG texture maps。" };
+      const failed = mapDetails.filter(row => row.resolutionResult === "FAIL");
+      return { item: "PNG 可讀性 / 像素尺寸", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} 個 PNG 檔案無法讀取。` : "所有可讀取的 PNG maps 皆有有效像素尺寸；像素尺寸僅供參考，DPI 另以 300 DPI 規則檢查。" };
+    }
+
+    function validatePngDpiSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "PNG DPI", result: "FAIL", details: "未找到可讀取的 PNG texture maps。" };
+      const failed = mapDetails.filter(row => row.dpiResult === "FAIL");
+      return { item: "PNG DPI", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} 個 PNG 檔案缺少 DPI metadata，或不符合 GAP Inc 300 DPI 要求。` : "所有可讀取的 PNG maps 均符合 GAP Inc 300 DPI 要求。" };
+    }
+
+    function validatePhysicalSizeSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "Physical Size", result: "FAIL", details: "No readable PNG texture maps found." };
+      const failed = mapDetails.filter(row => row.sizeResult === "FAIL");
+      return { item: "Physical Size", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} PNG file(s) below 4\" x 4\" minimum size or cannot be calculated due to missing DPI.` : "All readable PNG maps meet the 4\" x 4\" minimum size." };
+    }
+
+    function validatePngFormatSummary(mapDetails) {
+      if (!mapDetails.length) return { item: "PNG 格式 / 色深", result: "FAIL", details: "未找到 PNG texture maps。" };
+      const failed = mapDetails.filter(row => row.formatResult === "FAIL");
+      return { item: "PNG 格式 / 色深", result: failed.length ? "FAIL" : "PASS", details: failed.length ? `${failed.length} 個 PNG 檔案不是 8-bit，或無法讀取。` : "所有偵測到的 texture PNG 檔案皆為 PNG 格式，且為 8-bit 色深。" };
+    }
+
+    function renderChecks(checks) {
+      resultsBody.innerHTML = checks.map(row => `<tr><td>${escapeHtml(row.item)}</td><td class="${classFor(row.result)}">${displayResult(row.result)}</td><td>${escapeHtml(row.details)}</td></tr>`).join("");
+    }
+
+    function renderMapDetails(rows) {
+      if (!rows.length) { mapBody.innerHTML = `<tr><td colspan="6" class="small">未偵測到 texture maps，或封裝無法讀取。</td></tr>`; return; }
+      mapBody.innerHTML = rows.map(row => `<tr><td>${escapeHtml(row.map)}</td><td>${escapeHtml(row.fileName)}</td><td class="${classFor(row.resolutionResult)}">${escapeHtml(row.resolution)}</td><td class="${classFor(row.dpiResult)}">${escapeHtml(row.dpi)}</td><td class="${classFor(row.formatResult || 'PASS')}">${escapeHtml(row.format)}</td><td class="${classFor(row.result)}">${displayResult(row.result)}</td></tr>`).join("");
+    }
+
+
+    function renderGallery(rows) {
+      if (!rows.length) {
+        gallery.innerHTML = `<div class="small">尚無 texture map 預覽。</div>`;
+        return;
+      }
+      gallery.innerHTML = rows.map((row, idx) => {
+        if (!row.imageUrl) return "";
+        return `<div class="map-card">
+          <img src="${row.imageUrl}" alt="${escapeHtml(row.map)} preview" data-index="${idx}" />
+          <div class="meta">
+            <strong>${escapeHtml(row.map)}</strong><br />
+            ${escapeHtml(row.fileName)}<br />
+            ${escapeHtml(row.resolution)} | DPI: ${escapeHtml(row.dpi)} | Size: ${escapeHtml(row.physicalSize)}
+          </div>
+        </div>`;
+      }).join("");
+      gallery.querySelectorAll("img").forEach(img => {
+        img.addEventListener("click", () => {
+          const row = rows[Number(img.dataset.index)];
+          showModal(row.imageUrl, `${row.map}｜${row.fileName}`);
+        });
+      });
+    }
+
+    function showModal(url, title) {
+      modalImg.src = url;
+      modalTitle.textContent = title;
+      modal.classList.add("show");
+      panX = 0;
+      panY = 0;
+      zoomScale = 1;
+      modalImg.onload = () => fitImageToCanvas();
+    }
+
+    function hideModal() {
+      modal.classList.remove("show");
+      modalImg.src = "";
+      modalImg.onload = null;
+      panX = 0;
+      panY = 0;
+      zoomScale = 1;
+    }
+
+    function fitImageToCanvas() {
+      if (!modalImg.naturalWidth || !modalCanvas.clientWidth) return;
+      const scaleX = modalCanvas.clientWidth / modalImg.naturalWidth;
+      const scaleY = modalCanvas.clientHeight / modalImg.naturalHeight;
+      fitScale = Math.min(scaleX, scaleY, 1);
+      zoomScale = fitScale;
+      panX = 0;
+      panY = 0;
+      applyZoom();
+    }
+
+    function setZoomPercent(percent, keepPan = true) {
+      const clamped = Math.max(25, Math.min(800, percent));
+      zoomScale = clamped / 100;
+      if (!keepPan) { panX = 0; panY = 0; }
+      applyZoom();
+    }
+
+    function applyZoom() {
+      const percent = Math.round(zoomScale * 100);
+      zoomRange.value = String(Math.max(25, Math.min(800, percent)));
+      zoomValue.textContent = percent + "%";
+      modalImg.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoomScale})`;
+    }
+
+    function cleanupImageUrls() {
+      currentImageUrls.forEach(url => URL.revokeObjectURL(url));
+      currentImageUrls = [];
+    }
+
+    function renderScore(checks) {
+      let score = 100;
+      checks.forEach(c => { if (c.result === "FAIL") score -= 12; if (c.result === "WARNING") score -= 5; });
+      score = Math.max(0, score);
+      scoreEl.textContent = score + "/100";
+      let status = "PASS", cls = "pass";
+      if (checks.some(c => c.result === "FAIL")) { status = "FAIL"; cls = "fail"; }
+      else if (checks.some(c => c.result === "WARNING")) { status = "WARNING"; cls = "warn"; }
+      statusEl.textContent = displayStatus(status);
+      statusEl.className = "status " + cls;
+      summaryEl.textContent = status === "PASS" ? "此檔案符合 GAP Inc GSS FDT 自動檢查範圍，提交前仍需完成人工視覺確認。" : "此檔案在提交 GAP Inc 前，仍需修正或補充確認。";
+    }
+
+    function buildReportRows(checks, maps) {
+      const rows = [["類型", "項目", "結果", "說明"]];
+      checks.forEach(c => rows.push(["檢查", c.item, displayResult(c.result), c.details]));
+      maps.forEach(m => rows.push(["Texture Map", m.map, displayResult(m.result), `${m.fileName} | ${m.resolution} | DPI: ${m.dpi} | ${m.format}`]));
+      return rows;
+    }
+
+    function exportCsv() {
+      const csv = currentReport.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "GAP_Inc_GSS_FDT_Fabric_QA_Report_中文.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetAll() {
+      cleanupImageUrls();
+      hideModal();
+      window.lastFile = null; fileInput.value = ""; currentReport = [];
+      fileList.textContent = "尚未載入檔案。";
+      resultsBody.innerHTML = `<tr><td colspan="3" class="small">尚無檢查結果。</td></tr>`;
+      mapBody.innerHTML = `<tr><td colspan="6" class="small">尚未偵測到 texture maps。</td></tr>`;
+      gallery.innerHTML = `<div class="small">尚無 texture map 預覽。</div>`;
+      scoreEl.textContent = "--"; statusEl.textContent = "未載入檔案"; statusEl.className = "status warn";
+      summaryEl.textContent = "請上傳 .zfab 檔案開始檢查。"; downloadCsv.disabled = true;
+    }
+
+    function classFor(result) { if (result === "PASS") return "pass-text"; if (result === "FAIL") return "fail-text"; if (result === "INFO") return "small"; return "warn-text"; }
+    function displayResult(result) { return ({ PASS: "通過", FAIL: "失敗", WARNING: "警告", INFO: "資訊" })[result] || result; }
+    function displayStatus(status) { return ({ PASS: "通過", FAIL: "失敗", WARNING: "警告" })[status] || status; }
+    function escapeHtml(str) { return String(str).replace(/[&<>'"]/g, tag => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[tag])); }
+  </script>
+</body>
+</html>
