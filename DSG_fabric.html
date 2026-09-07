@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DICK'S 布料</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cd:#fff;--hd:#f7f9fc;--hd2:#f1f4f9;
+  --ac:#006554;--ac-d:#00443a;--ac-soft:rgba(0,101,84,.07);--ac-ln:rgba(0,101,84,.2);
+  --tx:#0e1828;--t2:#5a6478;--t3:#98a1b2;
+  --bd:#e6e9f0;--bd2:#eef1f6;
+  --gn:#2e7d52;--gn-soft:rgba(46,125,82,.1);
+  --or:#c25c20;--or-soft:rgba(194,92,32,.1);
+  --rd:#b83232;--rd-soft:rgba(184,50,50,.09);
+  --f-poly:#2b6ca3;--f-nylon:#5b4b9e;--f-cotton:#8a6d3b;--f-modal:#a35a86;
+  --f-spandex:#c9541f;--f-other:#7d8a85;
+}
+body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#eef1f6;color:var(--tx);min-height:100vh;font-size:16px}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+a{color:var(--ac);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.app{max-width:1480px;margin:24px auto;background:var(--cd);border-radius:14px;overflow:hidden;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(14,24,40,.05)}
+.appbar{padding:12px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.appbar .brand{display:flex;align-items:center;gap:14px}
+.appbar .navback{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);font-size:1.05em;line-height:1;cursor:pointer;transition:background .15s,border-color .15s}
+.appbar .navback:hover{background:var(--hd);border-color:var(--ac)}
+.appbar .navback.hide{display:none}
+.adminbox{margin-top:16px;padding:14px 16px;background:var(--hd);border:1px solid var(--bd);border-radius:11px}
+.adopt-ov{position:fixed;inset:0;background:rgba(14,24,40,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.adopt-modal{background:var(--cd);border-radius:14px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(14,24,40,.3);overflow:hidden}
+.adopt-modal .am-h{padding:16px 20px;border-bottom:1px solid var(--bd);font-weight:600}
+.adopt-modal .am-code{font-family:Consolas,monospace;color:var(--ac)}
+.adopt-modal .am-b{padding:18px 20px}
+.adopt-modal .am-l{display:block;font-size:.85em;font-weight:600;color:var(--t2);margin-bottom:5px}
+.adopt-modal .am-b .tin{width:100%;box-sizing:border-box}
+.adopt-modal .am-note{font-size:.82em;color:var(--t3);margin-top:10px;line-height:1.5}
+.adopt-modal .am-acts{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--bd)}
+.use-block{background:var(--hd);border:1px solid var(--bd);border-radius:11px;padding:16px 18px}
+.use-lab{font-size:.74rem;color:var(--t3);text-transform:uppercase;letter-spacing:.05em}
+.use-main{margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.use-code{font-size:1.5rem;color:var(--ac-d)}
+.use-specs{margin-top:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,220px));gap:16px 28px;justify-content:start}
+.use-specs .spec-item .k{font-size:.72rem;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.use-specs .spec-item .v{font-size:.96rem;color:var(--tx)}
+.use-specs .spec-bar{margin-top:9px;max-width:210px}
+.use-specs .spec-item .v.na{color:var(--t3)}
+.sim:hover{background:var(--hd)}
+.sim.best:hover{background:var(--ac-soft)}
+.compare{margin-top:16px;padding-top:15px;border-top:1px dashed var(--bd)}
+.cmp-row{display:flex;gap:14px;align-items:baseline;padding:3px 0}
+.cmp-lab{flex:0 0 78px;font-size:.72rem;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.cmp-val{font-size:.93rem;line-height:1.55}
+.cmp-orig .cmp-val{color:var(--or);font-weight:600}
+.cmp-actual .cmp-val{color:var(--tx)}
+.cmp-actual .cmp-val .mono{color:var(--ac-d);font-weight:600}
+.cmp-arrow{font-size:.76rem;color:var(--t3);margin:5px 0 5px 92px}
+.tbl .hact{display:flex;gap:6px;justify-content:flex-end}
+.ic-btn{border:1px solid var(--bd);background:var(--cd);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:.9rem;line-height:1;padding:0}
+.ic-btn:hover{border-color:var(--ac);background:var(--hd)}
+.gate-owner-link{margin-top:18px;font-size:.86rem;color:var(--t2)}
+.linklike{background:none;border:none;color:var(--ac);cursor:pointer;font-size:inherit;padding:0;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.linklike:hover{color:var(--ac-d)}
+.gate-mode{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700;color:var(--ac-d);margin-bottom:8px}
+.gate-mode span{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--ac);color:#fff}
+.owner-setup{margin-top:16px;border-top:1px solid var(--bd);padding-top:14px}
+.owner-setup summary{cursor:pointer;color:var(--ac);font-size:.86rem;font-weight:600;list-style-position:inside}
+.owner-setup summary:hover{color:var(--ac-d)}
+.sim-open{color:var(--ac);font-size:.78rem;font-weight:700;white-space:nowrap}
+.badge{width:44px;height:44px;border-radius:12px;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.62em;font-weight:700;flex:none}
+.appbar .logo{font-size:1.15em;font-weight:600}
+.appbar .logo em{color:var(--ac);font-style:normal;font-size:.78em;margin-left:5px;font-weight:600;background:var(--ac-soft);padding:2px 8px;border-radius:5px}
+.appbar .right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.appbar .stats{font-size:.82em;color:var(--t2)}
+.idchip{display:flex;align-items:center;gap:9px;padding:8px 15px;border-radius:11px;background:var(--hd);border:1px solid var(--bd);font-size:.85em}
+.idchip .who{font-weight:600}
+.idchip .nm{color:var(--t2)}
+.idchip .sw{color:var(--t3);text-decoration:underline;text-underline-offset:2px;font-size:.92em}
+.idchip .sw:hover{color:var(--ac)}
+
+.mtabs{border-bottom:1px solid var(--bd);padding:0 20px;display:flex;gap:2px;overflow-x:auto}
+.mtabs.hide{display:none}
+.mtab{padding:12px 20px;font-size:.92em;color:var(--t2);border-bottom:2.5px solid transparent;font-weight:500;margin-bottom:-1px;white-space:nowrap;border-radius:8px 8px 0 0;transition:.12s;display:flex;align-items:center;gap:7px}
+.mtab.a{color:var(--ac);border-bottom-color:var(--ac);background:var(--ac-soft)}
+.mtab:hover:not(.a){color:var(--tx);background:var(--hd)}
+.mtab .cnt{background:var(--rd);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72em;font-weight:700}
+
+.body{padding:34px clamp(18px,3.6vw,56px) 46px}
+
+h1{font-size:clamp(1.75rem,3.4vw,2.45rem);font-weight:700;letter-spacing:-.02em;line-height:1.15}
+h2.sec{font-size:1.2rem;font-weight:700;letter-spacing:-.01em}
+.lede{margin-top:9px;color:var(--t2);font-size:.9rem}
+.searchbar{display:flex;align-items:center;gap:10px;background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:8px 10px 8px 18px;margin-top:24px}
+.searchbar:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-soft)}
+.searchbar .ic{color:var(--t3);flex:none}
+.searchbar input{flex:1;min-width:0;border:none;outline:none;background:none;padding:12px 0;font-size:1.02rem}
+.btn{padding:11px 24px;border-radius:9px;background:var(--ac);color:#fff;font-weight:600;font-size:.92rem;white-space:nowrap}
+.btn:hover{background:var(--ac-d)}
+.btn.ghost{background:var(--cd);border:1px solid var(--bd);color:var(--t2);font-weight:500}
+.btn.ghost:hover{border-color:var(--ac);color:var(--ac)}
+.btn.gn{background:var(--gn)}.btn.gn:hover{background:#24623f}
+.btn.dg{background:var(--rd)}.btn.dg:hover{background:#8f2727}
+.btn.sm{padding:8px 15px;font-size:.85rem}
+.hint{margin-top:11px;font-size:.83rem;color:var(--t3)}
+.hint b{color:var(--t2);font-weight:500}
+.hint button{color:var(--ac);font-size:inherit;text-decoration:underline;text-underline-offset:2px}
+
+/* first-use guidance */
+.eyebrow{display:inline-flex;align-items:center;gap:7px;color:var(--ac-d);background:var(--ac-soft);border:1px solid var(--ac-ln);border-radius:999px;padding:6px 11px;font-size:.78rem;font-weight:700;margin-bottom:12px}
+.gate-hero{max-width:820px}
+.gate-hero h1{max-width:680px}
+.gate-hero .lede{font-size:1rem;line-height:1.7;max-width:700px}
+.use-cases{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.use-cases span{font-size:.82rem;color:var(--t2);background:var(--hd);border:1px solid var(--bd);border-radius:7px;padding:6px 10px}
+.step-label{display:flex;align-items:center;gap:8px;color:var(--ac-d);font-size:.8rem;font-weight:700;margin-bottom:8px}
+.step-label b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font-size:.75rem}
+.gate-search{margin-top:26px;padding:20px;background:var(--hd);border:1px solid var(--bd);border-radius:14px}
+.gate-search .searchbar{margin-top:10px;background:var(--cd)}
+.role-help{font-size:.82rem;color:var(--t2);line-height:1.55;margin-top:4px}
+.role-cta{margin-top:9px;color:var(--ac);font-size:.82rem;font-weight:700}
+.quickstart{position:relative;margin-bottom:28px;padding:22px;background:linear-gradient(135deg,var(--ac-soft),#fff 72%);border:1px solid var(--ac-ln);border-radius:14px}
+.quickstart-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}
+.quickstart-h h2{font-size:1.12rem;margin-bottom:4px}
+.quickstart-h p{font-size:.86rem;color:var(--t2)}
+.guide-close{color:var(--t2);font-size:.8rem;border:1px solid var(--bd);border-radius:7px;padding:6px 10px;background:#fff;white-space:nowrap}
+.guide-close:hover{border-color:var(--ac);color:var(--ac)}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.guide-card{background:#fff;border:1px solid var(--bd);border-radius:11px;padding:15px;text-align:left;transition:.15s}
+.guide-card:hover{border-color:var(--ac);box-shadow:0 4px 14px rgba(0,101,84,.08);transform:translateY(-1px)}
+.guide-card .num{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:7px;background:var(--ac);color:#fff;font-size:.75rem;font-weight:700;margin-bottom:10px}
+.guide-card .gt{display:block;font-weight:700;font-size:.92rem}
+.guide-card .gd{display:block;color:var(--t2);font-size:.79rem;line-height:1.5;margin-top:4px}
+.example-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--hd);color:var(--ac-d);font-family:Consolas,monospace;font-size:.78rem;margin:4px 3px 0 0}
+.example-btn:hover{border-color:var(--ac);background:var(--ac-soft)}
+.task-block{padding:24px 26px;background:#f3f8f7;border:1px solid #d9e9e5;border-left:5px solid var(--ac);border-radius:14px;box-shadow:0 1px 2px rgba(14,24,40,.03)}
+.task-block .searchbar{background:#fff}
+.task-block .filters{padding:13px 15px;background:rgba(255,255,255,.74);border:1px solid #dfeae7;border-radius:11px}
+
+/* gate */
+.gate-sec{margin-top:44px;padding-top:28px;border-top:1px solid var(--bd)}
+.gate-sec .d{margin-top:6px;font-size:.88rem;color:var(--t2)}
+.ocards{display:grid;grid-template-columns:repeat(auto-fill,minmax(266px,1fr));gap:16px;margin-top:20px}
+.ocard{background:var(--cd);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:11px;padding:20px 22px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:156px;transition:.15s;position:relative}
+.ocard:hover{box-shadow:0 6px 22px rgba(14,24,40,.09);transform:translateY(-2px)}
+.ocard .dot{width:9px;height:9px;border-radius:50%;background:var(--ac)}
+.ocard .arw{position:absolute;top:17px;right:19px;color:var(--t3)}
+.ocard:hover .arw{color:var(--ac)}
+.ocard .nm{font-size:1.2rem;font-weight:700;margin-top:9px}
+.ocard .sc{font-size:.83rem;color:var(--t2)}
+.ocard .ow{margin-top:auto;padding-top:14px;border-top:1px solid var(--bd2);display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ocard .ow .k{font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.ocard .ow .v{font-weight:700;font-size:.95rem}
+.ocard .ow .v.unset{color:var(--rd);font-size:.86rem}
+.ocard.member{border-left-color:var(--t3)}
+.ocard.member .dot{background:var(--t3)}
+.ocard.member .nm{font-weight:600;font-size:1.08rem}
+.setname{margin-top:16px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-size:.86rem;color:var(--t2)}
+.setname input{padding:9px 13px;border:1px solid var(--bd);border-radius:9px;outline:none;min-width:190px}
+.setname input:focus{border-color:var(--ac)}
+
+/* chips + filters */
+.filters{margin-top:20px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.filters .lab,.lab{font-size:.83rem;color:var(--t2)}
+.chip{padding:8px 16px;border-radius:20px;border:1px solid var(--bd);background:var(--cd);font-size:.86rem;color:var(--t2);display:inline-flex;align-items:center;gap:7px}
+.chip:hover{border-color:var(--ac-ln);color:var(--ac)}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.chip.soft.on{background:var(--ac-soft);color:var(--ac-d);border-color:var(--ac)}
+.chip .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.chip .n{opacity:.62;font-size:.9em}
+.adv-toggle{margin-top:14px;font-size:.85rem;color:var(--t2)}
+.adv-toggle:hover{color:var(--ac)}
+.adv{display:none;margin-top:13px;padding:15px 17px;background:var(--hd);border:1px solid var(--bd);border-radius:11px}
+.adv.open{display:block}
+.adv-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.adv-row+.adv-row{margin-top:12px}
+.pick{background:var(--cd);border:1px solid var(--bd);border-radius:9px;padding:9px 12px;outline:none}
+.pick:focus{border-color:var(--ac)}
+.tin{background:var(--cd);border:1px solid var(--bd);border-radius:9px;padding:9px 13px;outline:none}
+.tin:focus{border-color:var(--ac)}
+
+.zone{margin-top:22px;padding:22px 24px;border:1px solid var(--bd);border-radius:14px;background:var(--hd)}
+.zone.adopted-zone{background:#fff8f1;border-color:#f0dfcc;border-left:5px solid var(--or)}
+.zone.library-zone{background:#f5f8fc;border-color:#dde5f0;border-left:5px solid var(--f-poly)}
+.zone.result-zone{background:#f5f8fc;border-color:#dde5f0;border-left:5px solid var(--f-poly)}
+.zone-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:15px}
+.zone-h .t{font-size:.95rem;font-weight:600}
+.zone-h .n{font-size:.85rem;color:var(--t2)}
+.zone-h .n b{color:var(--tx)}
+.link{font-size:.84rem;color:var(--t2);text-decoration:underline;text-underline-offset:2px}
+.link:hover{color:var(--ac)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px}
+.fcard{background:var(--cd);border:1px solid var(--bd);border-radius:11px;padding:15px 16px;text-align:left;transition:.14s;display:flex;flex-direction:column;gap:9px;min-height:116px}
+.fcard:hover{border-color:var(--ac);box-shadow:0 3px 14px rgba(0,101,84,.09);transform:translateY(-1px)}
+.fcard .code{font-family:Consolas,monospace;font-weight:600;font-size:1rem;color:var(--ac-d);word-break:break-all;line-height:1.25}
+.fcard .line{font-size:.83rem;color:var(--t2);line-height:1.45}
+.fcard .line b{color:var(--tx);font-weight:600}
+.fcard .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fcard .gsm{font-family:Consolas,monospace;font-size:.85rem;font-weight:600}
+.fcard .gsm.na{color:var(--t3);font-weight:400}
+.bar{display:flex;height:5px;border-radius:3px;overflow:hidden;background:var(--bd2)}
+.bar i{display:block;height:100%}
+.pill{font-size:.68rem;padding:2px 7px;border-radius:5px;font-weight:600}
+.pill.knit{background:var(--ac-soft);color:var(--ac-d)}
+.pill.woven{background:rgba(43,108,163,.09);color:#2b6ca3}
+.pill.miss{background:var(--rd-soft);color:var(--rd)}
+.pill.act{background:var(--gn-soft);color:var(--gn)}
+.pill.rec{background:var(--or-soft);color:var(--or)}
+
+.back{font-size:.86rem;color:var(--t2);padding:7px 14px;border:1px solid var(--bd);border-radius:9px;margin-bottom:16px;display:inline-block}
+.back:hover{border-color:var(--ac);color:var(--ac)}
+.qbar{display:flex;align-items:center;gap:11px;background:var(--hd);border:1px solid var(--bd);border-radius:10px;padding:10px 15px;margin-bottom:18px;flex-wrap:wrap}
+.qbar .lab{color:var(--t3);font-size:.8rem}
+.qbar .val{font-family:Consolas,monospace;font-weight:600}
+.qbar .clr{margin-left:auto;font-size:.82rem;color:var(--t2);text-decoration:underline}
+.qbar .clr:hover{color:var(--rd)}
+
+.panel{background:var(--cd);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.panel-h{padding:20px 22px;border-bottom:1px solid var(--bd2);background:var(--hd);display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.panel-h .code{font-family:Consolas,monospace;font-size:1.42rem;font-weight:600;color:var(--ac-d);word-break:break-all}
+.panel-b{padding:20px 22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,200px));gap:18px 32px;justify-content:start;align-items:start}
+.fld .k{font-size:.71rem;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.fld .v{font-size:.93rem}
+.fld .v.na{color:var(--t3)}
+.tag{font-size:.75rem;padding:3px 9px;border-radius:6px;background:var(--hd2);border:1px solid var(--bd);color:var(--t2);margin-right:5px;display:inline-block}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid var(--bd2)}
+.acts .btn.ghost{padding:9px 16px;font-size:.85rem}
+
+.simhead{font-size:.79rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);margin:24px 0 10px}
+.sim{display:grid;grid-template-columns:50px minmax(280px,340px) 1fr 74px auto;gap:13px;align-items:center;padding:12px;border-radius:9px;text-align:left;width:100%;border:1px solid transparent}
+.sim:hover{background:var(--hd);border-color:var(--bd)}
+.sim.best{background:var(--ac-soft);border-color:var(--ac-ln)}
+.sim.best:hover{border-color:var(--ac)}
+.score{font-family:Consolas,monospace;font-size:.83rem;font-weight:700;text-align:center;padding:4px 0;border-radius:6px}
+.score.hi{background:var(--gn-soft);color:var(--gn)}
+.score.mid{background:var(--or-soft);color:var(--or)}
+.score.lo{background:var(--hd2);color:var(--t3)}
+.sim .c{font-family:Consolas,monospace;font-weight:600;font-size:.87rem;color:var(--ac-d);word-break:break-all}
+.sim .best-tag{display:inline-block;margin-left:8px;padding:2px 7px;border-radius:5px;background:var(--ac);color:#fff;font-family:'Segoe UI','Microsoft JhengHei',sans-serif;font-size:.68rem;vertical-align:1px}
+.sim .comp{display:block;margin-top:5px;font-size:.8rem;line-height:1.45;color:var(--tx);font-family:'Segoe UI','Microsoft JhengHei',sans-serif}
+.sim .comp.na{color:var(--t3)}
+.sim .why{font-size:.82rem;color:var(--t2)}
+.sim .g{font-family:Consolas,monospace;font-size:.81rem;color:var(--t2);text-align:right}
+.note{font-size:.79rem;color:var(--t3);margin-top:11px;line-height:1.55}
+.banner{background:var(--ac-soft);border-left:3px solid var(--ac);border-radius:0 8px 8px 0;padding:11px 15px;font-size:.85rem;color:var(--ac-d);margin-bottom:16px}
+.banner.or{background:var(--or-soft);border-left-color:var(--or);color:#7a4a20}
+
+.empty{background:var(--hd);border:1px dashed var(--bd);border-radius:12px;padding:44px 22px;text-align:center}
+.empty .ico{font-size:1.9rem;margin-bottom:8px}
+.empty .t{font-weight:600;margin-bottom:6px}
+.empty .d{font-size:.87rem;color:var(--t2)}
+.parsed{margin-top:17px;padding:13px 16px;border-radius:10px;background:var(--ac-soft);font-size:.87rem;color:var(--ac-d)}
+.parsed.bad{background:var(--rd-soft);color:var(--rd)}
+
+/* notify form */
+.nform{background:var(--hd);border:1px solid var(--bd);border-radius:11px;padding:17px 19px;margin-top:18px;text-align:left}
+.nform .lbl{font-size:.86rem;font-weight:600;margin-bottom:9px}
+.nform textarea{width:100%;border:1px solid var(--bd);border-radius:9px;padding:10px 13px;font-size:.9rem;resize:vertical;min-height:66px;outline:none}
+.nform textarea:focus{border-color:var(--ac)}
+.nform .row{display:flex;gap:8px;justify-content:flex-end;margin-top:11px}
+
+/* pending */
+.pr{display:flex;gap:14px;align-items:flex-start;background:var(--cd);border:1px solid var(--bd);border-radius:11px;padding:15px 17px;margin-bottom:10px}
+.pr.done{opacity:.6;background:var(--hd)}
+.pr .ico{font-size:1.3rem}
+.pr .info{flex:1;min-width:0}
+.pr .rd{font-family:Consolas,monospace;font-weight:600;font-size:1rem;color:var(--ac-d)}
+.pr .meta{font-size:.8rem;color:var(--t2);margin-top:3px}
+.pr .msg{font-size:.85rem;color:var(--t2);margin-top:7px;padding:8px 12px;background:var(--hd2);border-radius:7px}
+
+/* table */
+.tbl{border:1px solid var(--bd);border-radius:11px;overflow:hidden}
+.tbl .hrow,.tbl .row{display:grid;gap:12px;padding:11px 15px;align-items:center;font-size:.85rem}
+.tbl .hrow{background:var(--hd);font-weight:600;font-size:.78rem;color:var(--t2);text-transform:uppercase;letter-spacing:.04em}
+.tbl .row{border-top:1px solid var(--bd2)}
+.tbl .row:hover{background:var(--hd)}
+.tbl .row.warn{background:var(--or-soft)}
+.tbl .row.ok{background:var(--gn-soft)}
+.tbl .dt{font-family:Consolas,monospace;font-size:.78rem;color:var(--t2)}
+.tbl .mono{font-family:Consolas,monospace}
+.h-grid{grid-template-columns:140px 92px 122px 1fr 1fr 80px 74px}
+.x-grid{grid-template-columns:38px 150px 78px 1fr 96px 120px}
+
+/* drop */
+.drop{border:2px dashed var(--bd);border-radius:13px;padding:44px 24px;text-align:center;background:var(--hd);transition:.15s}
+.drop.over{border-color:var(--ac);background:var(--ac-soft)}
+.drop .ico{font-size:2.2rem;margin-bottom:10px}
+.drop h3{font-size:1.05rem;margin-bottom:7px}
+.drop p{font-size:.85rem;color:var(--t2);max-width:520px;margin:0 auto 14px}
+.xsum{display:flex;gap:18px;flex-wrap:wrap;align-items:center;background:var(--hd);border:1px solid var(--bd);border-radius:11px;padding:15px 18px;margin-bottom:15px}
+.xsum .fname{font-weight:600;font-size:.92rem}
+.xsum .fmeta{font-size:.79rem;color:var(--t2);margin-top:3px}
+.xsum .stat{text-align:center;min-width:62px}
+.xsum .stat .n{font-size:1.35rem;font-weight:700;line-height:1.1}
+.xsum .stat .l{font-size:.72rem;color:var(--t2)}
+.xsum .stat.gn .n{color:var(--gn)}
+.xsum .stat.or .n{color:var(--or)}
+.xsum .stat.rd .n{color:var(--rd)}
+.colpick{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:12px 15px;margin-bottom:14px;font-size:.84rem}
+.colpick select{max-width:170px}
+
+/* settings */
+.stabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.stab{padding:8px 16px;border-radius:9px;border:1px solid var(--bd);font-size:.86rem;color:var(--t2)}
+.stab.a{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.stab:hover:not(.a){border-color:var(--ac);color:var(--ac)}
+.sset{background:var(--cd);border:1px solid var(--bd);border-radius:11px;padding:20px 22px;margin-bottom:14px}
+.sset h3{font-size:1rem;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sset h3 .meta{font-size:.79rem;color:var(--t3);font-weight:400}
+.sset .help{background:var(--hd);border-radius:9px;padding:12px 15px;font-size:.83rem;color:var(--t2);line-height:1.65;margin-bottom:12px}
+.sset code{background:var(--hd2);border:1px solid var(--bd);border-radius:4px;padding:1px 6px;font-family:Consolas,monospace;font-size:.86em;color:var(--ac-d)}
+.ta{width:100%;min-height:190px;border:1px solid var(--bd);border-radius:9px;padding:12px 15px;font-family:Consolas,monospace;font-size:.85rem;line-height:1.6;resize:vertical;outline:none}
+.ta:focus{border-color:var(--ac)}
+.rulerow{display:grid;grid-template-columns:34px 1fr 96px;gap:12px;padding:10px 12px;border-top:1px solid var(--bd2);font-size:.85rem;align-items:baseline}
+.rulerow:first-of-type{border-top:none}
+.rulerow .n{font-family:Consolas,monospace;color:var(--t3)}
+.rulerow .nm{font-weight:600}
+.rulerow .lg{font-size:.8rem;color:var(--t2);margin-top:2px}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(14px);background:var(--tx);color:#fff;padding:12px 22px;border-radius:10px;font-size:.87rem;opacity:0;pointer-events:none;transition:.2s;z-index:90;max-width:88vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.gn{background:var(--gn)}.toast.or{background:var(--or)}.toast.rd{background:var(--rd)}
+
+@media(max-width:760px){
+  body{font-size:15px}.app{margin:0;min-height:100vh;border-radius:0;border-left:0;border-right:0}.appbar{padding:10px 14px}.appbar .stats{display:none}.body{padding:24px 16px 38px}.mtabs{padding:0 8px}.mtab{padding:11px 13px}.guide-grid{grid-template-columns:1fr}.quickstart,.task-block{padding:17px}.zone{padding:18px 16px}.gate-search{padding:15px}.searchbar{align-items:stretch;flex-wrap:wrap;padding:8px 9px}.searchbar .ic{align-self:center}.searchbar input{width:calc(100% - 30px);flex:none}.searchbar .btn{flex:1;padding:10px 12px}.ocards{grid-template-columns:1fr}.sim{grid-template-columns:44px 1fr 64px}.sim .why,.sim>span:last-child{grid-column:2/-1}.tbl{overflow-x:auto}.tbl .hrow,.tbl .row{min-width:760px}.drop{padding:30px 15px}.idchip{padding:7px 10px}.badge{width:38px;height:38px}.appbar .right{gap:7px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="appbar">
+    <div class="brand">
+      <button class="navback hide" id="navback" type="button" title="上一步" aria-label="上一步">←</button>
+      <div class="badge">FABRIC</div>
+      <button class="logo" id="home" type="button">DICK'S 布料 <em>v2.3.0</em></button>
+    </div>
+    <div class="right" id="bar-right"></div>
+  </div>
+  <div class="mtabs hide" id="mtabs"></div>
+  <div class="body" id="tab-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const CONFIG = {
+  VERSION: '2.3.0',
+  UNC: '\\\\192.168.1.220\\3ddb\\Fabric Library',
+  HOME_URL: '',        // 品牌總覽頁網址
+  BRAND_MATCH: ['DICKS','DICK S','DSG','DICKS SPORTING GOODS'],
+  PREFIX: 'dsgfab1:',
+  MAIL_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbx5KUfppgbnSQWBBkg8FY2QvoHMAVEXTFcHWxMccMWMF3f9DH4F5IrS1UDkJe8sgLk/exec',
+  OWNER: { brand:"DICK'S", scope:'Main line', name:'' },  // 雲端 config 有值時以雲端為準
+  // ── Firebase RTDB（跟 GAP 版同一個專案，DSG 用獨立節點，不碰 GAP 的 fabrics/styles/history）
+  FB: {
+    base: 'https://dpc-fabric-libaray-default-rtdb.firebaseio.com',
+    fabrics: 'dsg_fabrics',    // per-key，不是整包陣列 → 不會被別人存檔蓋掉
+    styles:  'dsg_styles',
+    history: 'dsg_history',
+    pending: 'dsg_pending',
+    config:  'dsg_config'
+  }
+};
+
+/* ============================================================
+   SEED —— 公檔中 originating brand = DICK'S 的 19 筆
+   ============================================================ */
+const SEED = [
+  {code:'320355-W',        type:'Woven', sub:'Ripstop',       comp:'89% Polyester, 11% Spandex',            gsm:null, src:['scan']},
+  {code:'AW-0900',         type:'Woven', sub:'Plain Weave',   comp:'89% Polyester, 11% Spandex',            gsm:125,  src:['scan']},
+  {code:'AW-1164',         type:'Woven', sub:'Plain Weave',   comp:'92% Polyester, 8% Spandex',             gsm:94,   src:['scan']},
+  {code:'KOI18278-C1',     type:'Woven', sub:'Scuba',         comp:'47% Polyester, 43% Modal, 10% Spandex', gsm:320,  src:['scan']},
+  {code:'LTC32676',        type:'Woven', sub:'Stretch Dobby', comp:'89% Nylon, 11% Spandex',                gsm:170,  src:['scan']},
+  {code:'PT-WX-24558',     type:'Woven', sub:'Scuba',         comp:'76% Polyester, 24% Spandex',            gsm:280,  src:['scan']},
+  {code:'T15867',          type:'Woven', sub:null,            comp:null,                                    gsm:208,  src:['scan']},
+  {code:'119556-DWR',      type:'Woven', sub:'Plain Weave',   comp:'100% Nylon',                            gsm:110,  src:['scan']},
+  {code:'AW-1164-PERF-22', type:'Woven', sub:'Plain Weave',   comp:'91% Polyester, 9% Spandex',             gsm:87,   src:['excel','scan']},
+  {code:'AKSF0061-25',     type:'Knit',  sub:'Jersey',        comp:'92% Cotton, 8% Spandex',                gsm:215,  src:['scan']},
+  {code:'KOA16535',        type:'Knit',  sub:'Tricot',        comp:'77% Nylon, 23% Spandex',                gsm:180,  src:['scan']},
+  {code:'PT-WX-15442',     type:'Knit',  sub:'Jersey',        comp:'100% Polyester',                        gsm:105,  src:['scan']},
+  {code:'PT-WX-18286',     type:'Knit',  sub:'Jacquard',      comp:'76% Nylon, 24% Spandex',                gsm:240,  src:['scan']},
+  {code:'PT-WX-19341',     type:'Knit',  sub:'Double Knit',   comp:'70% Nylon, 30% Spandex',                gsm:250,  src:['scan']},
+  {code:'PT-WX-34692',     type:'Knit',  sub:'Interlock',     comp:'84% Polyester, 16% Spandex',            gsm:190,  src:['scan']},
+  {code:'PTM-090-7',       type:'Knit',  sub:'Tricot',        comp:'100% Polyester',                        gsm:115,  src:['scan']},
+  {code:'S618006-W',       type:'Knit',  sub:'Jersey',        comp:'79% Polyester, 21% Spandex',            gsm:190,  src:['scan']},
+  {code:'WJ-1333',         type:'Knit',  sub:'Circular Knit', comp:'75% Nylon, 25% Spandex',                gsm:200,  src:['scan']},
+  {code:'TY-255165',       type:'Knit',  sub:'Jacquard',      comp:'100% Polyester',                        gsm:450,  src:['scan']}
+];
+
+/* ============================================================
+   STORE
+   ============================================================ */
+const Store = {
+  get(k){ try{ const v = localStorage.getItem(CONFIG.PREFIX+k); return v ? JSON.parse(v) : null; }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(CONFIG.PREFIX+k, JSON.stringify(v)); return true; }catch(e){ toast('儲存空間已滿','rd'); return false; } },
+  del(k){ try{ localStorage.removeItem(CONFIG.PREFIX+k); }catch(e){} },
+  list(pre){
+    const out = [];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k && k.startsWith(CONFIG.PREFIX+pre)) out.push(k.slice(CONFIG.PREFIX.length));
+      }
+    }catch(e){}
+    return out.sort();
+  }
+};
+
+/* ============================================================
+   FIREBASE —— 多人共用層
+   fabrics / styles / pending / config 走 per-key PUT、DELETE
+   history 走 POST（append-only），雲端為單一真實來源
+   ============================================================ */
+const Sync = {
+  status:'connecting',   // connecting | ok | offline
+  lastAt:null, lastError:null, log:[],
+  _log(kind,msg){ this.log.unshift({ ts:new Date().toLocaleTimeString('zh-TW',{hour12:false}), kind, msg }); this.log = this.log.slice(0,30); },
+  ok(msg){ this.status='ok'; this.lastAt=new Date(); this.lastError=null; if(msg) this._log('ok',msg); },
+  fail(e){ this.status='offline'; this.lastError=String(e&&e.message||e); this._log('err', this.lastError); }
+};
+// Firebase key 不能含 . $ # [ ] /
+function fbKey(s){ return String(s||'').replace(/[.#$\[\]\/]/g,'_'); }
+function fbUrl(node, key){
+  return CONFIG.FB.base + '/' + node + (key !== undefined && key !== null ? '/' + encodeURIComponent(fbKey(key)) : '') + '.json';
+}
+function fbPut(node, key, val){
+  return fetch(fbUrl(node,key), { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(val) })
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); Sync.ok(); })
+    .catch(e => { Sync.fail(e); });
+}
+function fbDel(node, key){
+  return fetch(fbUrl(node,key), { method:'DELETE' })
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); Sync.ok(); })
+    .catch(e => { Sync.fail(e); });
+}
+function fbPost(node, val){
+  return fetch(fbUrl(node), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(val) })
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); Sync.ok(); })
+    .catch(e => { Sync.fail(e); });
+}
+function fbGet(node){
+  return fetch(fbUrl(node)).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
+
+/* ── 拉取 ───────────────────────────────────────────── */
+async function pullFabrics(){
+  const d = await fbGet(CONFIG.FB.fabrics);
+  if(d && typeof d === 'object'){
+    const arr = Object.values(d).filter(Boolean);
+    if(arr.length){ DATA = arr.map(decorate); Store.set('fabrics', arr); return arr.length; }
+  }
+  return 0;
+}
+async function pullStyles(){
+  const d = await fbGet(CONFIG.FB.styles);
+  // 雲端為準：先清掉本機 style:，再寫入雲端版本，這樣刪除才會傳播
+  Store.list('style:').forEach(k => Store.del(k));
+  let n = 0;
+  if(d && typeof d === 'object'){
+    Object.entries(d).forEach(([k,v]) => { if(v){ Store.set('style:'+(v.styleKey||k), v); n++; } });
+  }
+  return n;
+}
+async function pullHistory(){
+  const d = await fbGet(CONFIG.FB.history);
+  if(d && typeof d === 'object'){
+    const remote = Object.entries(d).map(([id,v]) => Object.assign({ fbid:id }, v)).filter(x => x.action);
+    const rkeys = new Set(remote.map(h => h.id || (h.iso+'|'+h.action+'|'+h.code)));
+    const now = Date.now();
+    const local = (Store.get('history')||[]).filter(h =>
+      h && !rkeys.has(h.id || (h.iso+'|'+h.action+'|'+h.code)) && (now - Date.parse(h.iso||0) < 5*60*1000));
+    const merged = remote.concat(local).sort((a,b) => Date.parse(b.iso||0) - Date.parse(a.iso||0));
+    Store.set('history', merged.slice(0,1200));
+    return merged.length;
+  }
+  Store.set('history', []);
+  return 0;
+}
+async function pullPending(){
+  const d = await fbGet(CONFIG.FB.pending);
+  const list = (d && typeof d === 'object') ? Object.values(d).filter(Boolean) : [];
+  list.sort((a,b) => Date.parse(b.iso||0) - Date.parse(a.iso||0));
+  Store.set('pendingRequests', list);
+  return list.length;
+}
+async function pullConfig(){
+  const d = await fbGet(CONFIG.FB.config);
+  if(d && typeof d === 'object'){
+    if(d.ownerName) CONFIG.OWNER.name = d.ownerName;
+    if(d.ownerScope) CONFIG.OWNER.scope = d.ownerScope;
+    if(typeof d.mailScriptUrl === 'string' && d.mailScriptUrl) CONFIG.MAIL_SCRIPT_URL = d.mailScriptUrl;
+  }
+}
+let _pulling = false, _lastPull = 0;
+async function pullAll(force){
+  if(_pulling) return;
+  if(!force && Date.now() - _lastPull < 15000) return;
+  _pulling = true; _lastPull = Date.now();
+  Sync.status = 'connecting'; renderBar();
+  try{
+    await pullConfig();
+    const nf = await pullFabrics();
+    await pullStyles(); await pullHistory(); await pullPending();
+    Sync.ok('已拉取雲端資料' + (nf ? '（布料 ' + nf + ' 筆）' : '（雲端尚無布料，使用本機 ' + DATA.length + ' 筆）'));
+  }catch(e){ Sync.fail(e); }
+  _pulling = false;
+  render();
+}
+
+/* ── 推送 ───────────────────────────────────────────── */
+function pushFabric(f){ fbPut(CONFIG.FB.fabrics, f.key, { code:f.code, type:f.type, sub:f.sub, comp:f.comp, gsm:f.gsm, src:f.src }); }
+function pushAllFabrics(){
+  const payload = {};
+  DATA.forEach(f => { payload[fbKey(f.key)] = { code:f.code, type:f.type, sub:f.sub, comp:f.comp, gsm:f.gsm, src:f.src }; });
+  return fbPut(CONFIG.FB.fabrics, null, payload);
+}
+function saveStyle(key, val){
+  val.styleKey = key;
+  Store.set('style:'+key, val);
+  fbPut(CONFIG.FB.styles, key, val);
+}
+function removeStyle(key){
+  Store.del('style:'+key);
+  fbDel(CONFIG.FB.styles, key);
+  // 一併清掉雲端該款號的歷史，避免重整後又同步回來
+  fbGet(CONFIG.FB.history).then(d => {
+    if(!d || typeof d !== 'object') return;
+    Object.entries(d).forEach(([id,v]) => {
+      if(v && (v.styleKey === key || (v.style && (v.style + (v.bom?'_'+v.bom:'')) === key))) fbDel(CONFIG.FB.history, id);
+    });
+  }).catch(()=>{});
+}
+function savePending(r){ Store.set('pendingRequests', Store.get('pendingRequests')||[]); fbPut(CONFIG.FB.pending, r.id, r); }
+/* 找不到布 → 用公司信箱寄信給 DICK'S 負責人（沿用 GAP 的 Apps Script → Power Automate，品牌參數 dsg）*/
+function notifyEmail(code, msg, fromUser){
+  if(!CONFIG.MAIL_SCRIPT_URL){ toast('尚未設定寄信服務網址','or'); return; }
+  try{
+    const cb='dsgmail_'+Date.now()+Math.floor(Math.random()*1000);
+    let done=false;
+    const cleanup=()=>{ try{ delete window[cb]; }catch(e){} if(sc.parentNode) sc.parentNode.removeChild(sc); };
+    window[cb]=function(res){
+      done=true;
+      if(res && res.ok){ toast('✅ 已寄信通知負責人'+(res.to?(' '+res.to):''),'gn'); }
+      else { toast('⚠ 通知已記錄，但寄信未成功'+(res&&res.error?('：'+res.error):'')+'（負責人仍會在待處理請求看到）','or'); }
+      cleanup();
+    };
+    const p=new URLSearchParams({ brand:'dsg', query:code||'', message:msg||'', fromUser:fromUser||'成員',
+      ts:new Date().toLocaleString('zh-TW',{hour12:false}), callback:cb });
+    var sc=document.createElement('script');
+    sc.src=CONFIG.MAIL_SCRIPT_URL+'?'+p.toString();
+    sc.onerror=function(){ if(!done){ toast('⚠ 連不上寄信服務，但通知已記錄','or'); } cleanup(); };
+    document.body.appendChild(sc);
+    setTimeout(()=>{ if(!done){ toast('⚠ 寄信服務逾時沒回應，但通知已記錄','or'); cleanup(); } }, 15000);
+  }catch(e){}
+}
+function saveConfigField(k, v){ fbPut(CONFIG.FB.config, k, v); }
+
+/* ============================================================
+   纖維 / 解析
+   ============================================================ */
+const FIBER_COLOR = {POLYESTER:'var(--f-poly)',NYLON:'var(--f-nylon)',COTTON:'var(--f-cotton)',MODAL:'var(--f-modal)',SPANDEX:'var(--f-spandex)'};
+const FIBER_ZH = {POLYESTER:'聚酯',NYLON:'尼龍',COTTON:'棉',MODAL:'莫代爾',SPANDEX:'彈性'};
+function fiberColor(f){ return FIBER_COLOR[f] || 'var(--f-other)'; }
+function normFiber(name){
+  const s = String(name||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(/POLYESTER|POLY|PET|RPET/.test(s)) return 'POLYESTER';
+  if(/NYLON|POLYAMIDE|^PA$/.test(s))    return 'NYLON';
+  if(/COTTON|BCI/.test(s))              return 'COTTON';
+  if(/MODAL/.test(s))                   return 'MODAL';
+  if(/SPANDEX|ELASTANE|LYCRA|ELAST/.test(s)) return 'SPANDEX';
+  return s || 'OTHER';
+}
+function parseComp(str){
+  if(!str) return [];
+  const out = [], re = /(\d+(?:\.\d+)?)\s*%\s*([A-Za-z][A-Za-z\s\-()]*)/g;
+  let m;
+  while((m = re.exec(str)) !== null){
+    const f = normFiber(m[2]), p = parseFloat(m[1]);
+    const hit = out.find(o => o.f === f);
+    if(hit) hit.p += p; else out.push({ f, p });
+  }
+  return out.sort((a,b) => b.p - a.p);
+}
+function hasSpandex(fs){ return fs.some(x => x.f === 'SPANDEX'); }
+// 布號沒有命名規範 → 只做大小寫/空白/分隔符正規化，不解析前後綴
+function normCode(s){ return String(s||'').toUpperCase().replace(/[\s_\u2013\u2014]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+function decorate(f){
+  const fs = parseComp(f.comp);
+  return Object.assign({}, f, { fibers:fs, spandex:hasSpandex(fs), key:normCode(f.code),
+    incomplete: !f.sub || !f.comp || f.gsm == null });
+}
+
+/* ============================================================
+   相似度（SOP）
+   成分為主 60 分、布種 20 分、克重 25 分，缺值扣分
+   ============================================================ */
+const SOP = { compMax:60, typeSame:0, typeCross:20, subDiff:9, weightMax:25, missComp:30, missSub:8, missGsm:10 };
+function similarity(a, b){
+  const why = [];
+  const keys = new Set([...a.fibers.map(x=>x.f), ...b.fibers.map(x=>x.f)]);
+  let dist = 0;
+  keys.forEach(k => {
+    const pa = (a.fibers.find(x=>x.f===k)||{p:0}).p;
+    const pb = (b.fibers.find(x=>x.f===k)||{p:0}).p;
+    dist += Math.abs(pa - pb);
+  });
+  let score = 100;
+  if(a.fibers.length && b.fibers.length){
+    score -= Math.min(SOP.compMax, dist * 0.3);
+    if(dist === 0) why.push('成分完全相同');
+    else if(dist <= 10) why.push('成分差 ' + dist.toFixed(0) + ' 點');
+    else {
+      const af = a.fibers.map(x=>x.f).sort().join('+');
+      const bf = b.fibers.map(x=>x.f).sort().join('+');
+      why.push(af === bf ? '同纖維、比例差 ' + dist.toFixed(0) + ' 點' : '纖維組成不同');
+    }
+  } else { score -= SOP.missComp; why.push('成分不全'); }
+
+  if(a.sub && b.sub){
+    if(a.sub.toUpperCase() === b.sub.toUpperCase()) why.push('同布種');
+    else if(a.type === b.type){ score -= SOP.subDiff; why.push(b.sub); }
+    else { score -= SOP.typeCross; why.push('跨' + (b.type==='Knit'?'針織':'梭織')); }
+  } else { score -= SOP.missSub; why.push('布種未填'); }
+
+  if(a.gsm != null && b.gsm != null){
+    const d = Math.abs(a.gsm - b.gsm);
+    score -= Math.min(SOP.weightMax, (d / Math.max(a.gsm, b.gsm)) * 70);
+    why.push(d === 0 ? '克重相同' : '克重差 ' + d + 'g');
+  } else { score -= SOP.missGsm; why.push('克重未填'); }
+
+  return { score: Math.max(0, Math.round(score)), why: why.join('・') };
+}
+function rankAgainst(target, pool){
+  return pool.filter(f => f.key !== target.key)
+    .map(f => Object.assign({ f }, similarity(target, f)))
+    .sort((x,y) => y.score - x.score);
+}
+const SUBS_DICT = ['Single Jersey','Double Knit','Circular Knit','Plain Weave','Stretch Dobby','Interlock','Jacquard','Ripstop','Jersey','Tricot','Scuba','Dobby','Twill','Mesh','Fleece','Terry','Rib','Ponte','Poplin','Canvas','Softshell','Bonded','Air Layer','Powermesh'];
+function parseSpec(text){
+  const t = String(text||'').trim();
+  if(!t) return null;
+  const comp = parseComp(t);
+  const gm = t.match(/(\d{2,4})\s*(?:gsm|g\/m2|g\/m²|g\/m|克)/i);
+  const gsm = gm ? parseInt(gm[1],10) : null;
+  let sub = null;
+  for(const s of SUBS_DICT){ if(new RegExp(s.replace(/\s+/g,'\\s*'),'i').test(t)){ sub = s; break; } }
+  const KNIT = /jersey|tricot|interlock|knit|rib|fleece|terry|ponte|mesh|jacquard|powermesh/i;
+  const type = sub ? (KNIT.test(sub) ? 'Knit' : 'Woven') : null;
+  if(!comp.length && gsm == null && !sub) return null;
+  return { code:'（查詢規格）', key:'__SPEC__', type, sub, comp:t, gsm, fibers:comp, spandex:hasSpandex(comp), src:[] };
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let DATA = [];
+const State = {
+  identity:null, tab:'search',
+  search:{ q:'', result:null, type:'all', gsm:'all', sort:'code', fibers:new Set(), adv:false },
+  excel:{ fileName:null, sheetName:null, headerIdx:0, cols:{}, rows:[], filter:'all', expanded:null, raw:null, headerRow:[] },
+  history:{ q:'', action:'all' },
+  settings:{ section:'profile' },
+  lib:{ pending:null }
+};
+function isAdmin(){ return !!State.identity && State.identity.role === 'owner'; }
+function userName(){
+  if(!State.identity) return '訪客';
+  return State.identity.role === 'owner'
+    ? (State.identity.name || CONFIG.OWNER.name || '負責人')
+    : (State.identity.name || '團隊成員');
+}
+
+function loadData(){
+  const cached = Store.get('fabrics');
+  const base = Array.isArray(cached) && cached.length ? cached : SEED;
+  DATA = base.map(decorate);
+}
+function saveFabrics(newOnes){
+  Store.set('fabrics', DATA.map(f => ({ code:f.code, type:f.type, sub:f.sub, comp:f.comp, gsm:f.gsm, src:f.src })));
+  if(Array.isArray(newOnes)) newOnes.forEach(pushFabric);   // 只推新增的，不整包覆蓋
+}
+function findFabric(code){
+  const k = normCode(code);
+  return DATA.find(f => f.key === k) || null;
+}
+function loadIdentity(){
+  const s = Store.get('identity');
+  if(s && s.role) State.identity = s;
+}
+function setIdentity(role, name){
+  State.identity = { role, name: name || '' };
+  Store.set('identity', State.identity);
+  // 負責人姓名是全隊共用的設定 → 寫回雲端 config，其他人開啟就看得到
+  if(role === 'owner' && name && CONFIG.OWNER.name !== name){
+    CONFIG.OWNER.name = name;
+    saveConfigField('ownerName', name);
+  }
+  State.tab = 'search'; State.search.result = null;
+  render();
+  if(role === 'member') setTimeout(() => { const q = $('q'); if(q) q.focus(); }, 0);
+}
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+function logHistory(rec){
+  const entry = Object.assign({
+    id: uid(),
+    ts: new Date().toLocaleString('zh-TW',{hour12:false}),
+    iso: new Date().toISOString(),
+    user: userName(),
+    role: State.identity ? State.identity.role : 'guest',
+    styleKey: rec.style ? (rec.style + (rec.bom ? '_' + rec.bom : '')) : ''
+  }, rec);
+  const list = Store.get('history') || [];
+  list.unshift(entry);
+  Store.set('history', list.slice(0, 1200));
+  fbPost(CONFIG.FB.history, entry);
+}
+const ACTION_LABEL = {
+  commit_main:'採用主布', commit_substitute:'採用代用布', add_accessory:'新增配布',
+  style_main_changed:'改主布', excel_import:'匯入 Excel', library_import:'匯入公檔',
+  notify:'通知負責人', resolve:'處理請求', delete_style:'刪除款號',
+  fabric_edit:'改布料資訊', fabric_delete:'刪除布料'
+};
+
+/* ============================================================
+   UTIL
+   ============================================================ */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+let toastT;
+function toast(msg, kind){
+  const el = $('toast');
+  el.className = 'toast show' + (kind ? ' ' + kind : '');
+  el.textContent = msg;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 2400);
+}
+function copy(text, msg){
+  const ok = () => toast(msg || '已複製', 'gn');
+  const fb = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); ok(); }catch(e){ toast('複製失敗，請手動選取','rd'); }
+    document.body.removeChild(ta);
+  };
+  if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok).catch(fb);
+  else fb();
+}
+function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function today(){ return new Date().toISOString().slice(0,10); }
+
+function bar(fibers){
+  if(!fibers || !fibers.length) return '<div class="bar"></div>';
+  return '<div class="bar">' + fibers.map(x =>
+    `<i style="width:${x.p}%;background:${fiberColor(x.f)}" title="${esc(x.f)} ${x.p}%"></i>`).join('') + '</div>';
+}
+function typePill(f){ return f.type === 'Knit' ? '<span class="pill knit">針織</span>'
+                    : f.type === 'Woven' ? '<span class="pill woven">梭織</span>' : ''; }
+function scoreCls(n){ return n>=80?'hi':n>=60?'mid':'lo'; }
+
+/* ============================================================
+   FILTER
+   ============================================================ */
+function visible(){
+  const S = State.search;
+  let out = DATA.slice();
+  const q = S.q.trim().toUpperCase();
+  if(q) out = out.filter(f =>
+    f.key.includes(normCode(q)) || f.code.toUpperCase().includes(q) ||
+    (f.sub||'').toUpperCase().includes(q) || (f.comp||'').toUpperCase().includes(q));
+  if(S.type !== 'all') out = out.filter(f => f.type === S.type);
+  if(S.gsm !== 'all'){
+    const p = S.gsm.split('-').map(Number);
+    out = out.filter(f => f.gsm != null && f.gsm >= p[0] && f.gsm < p[1]);
+  }
+  if(S.fibers.size) out = out.filter(f => [...S.fibers].every(k => f.fibers.some(x => x.f === k)));
+  out.sort((a,b) => {
+    if(S.sort === 'gsm'){ if(a.gsm==null) return 1; if(b.gsm==null) return -1; return a.gsm - b.gsm; }
+    if(S.sort === 'sub') return (a.sub||'zzz').localeCompare(b.sub||'zzz');
+    return a.code.localeCompare(b.code, undefined, { numeric:true });
+  });
+  return out;
+}
+function filterActive(){
+  const S = State.search;
+  return !!(S.type !== 'all' || S.gsm !== 'all' || S.fibers.size);
+}
+
+/* ============================================================
+   COMPONENTS
+   ============================================================ */
+function cardHTML(f){
+  return `<button class="fcard" data-open="${esc(f.code)}">
+    <span class="code">${esc(f.code)}</span>
+    <span class="line"><b>${esc(f.sub || '布種未填')}</b><br>${esc(f.comp || '成分未填')}</span>
+    ${bar(f.fibers)}
+    <span class="foot">
+      <span>${typePill(f)}${f.incomplete?'<span class="pill miss" style="margin-left:5px">待補</span>':''}</span>
+      <span class="gsm ${f.gsm==null?'na':''}">${f.gsm==null?'—':f.gsm+' g'}</span>
+    </span>
+  </button>`;
+}
+function simRows(list, withPick, ctx, adopt){
+  if(!list.length) return '<p class="note">庫內沒有其他布可比。</p>';
+  return list.map((s, i) => `<button class="sim ${i===0?'best':''}" data-open="${esc(s.f.code)}">
+      <span class="score ${scoreCls(s.score)}">${s.score}</span>
+      <span><span class="c">${esc(s.f.code)}${i===0?'<span class="best-tag">最相似</span>':''}</span>
+        <span class="comp ${s.f.comp?'':'na'}">${esc(s.f.comp||'成分未填')}</span></span>
+      <span class="why">${esc(s.why)}</span>
+      <span class="g">${s.f.gsm==null?'—':s.f.gsm+'g'}</span>
+      <span>${withPick && isAdmin() ? `<span class="btn sm" data-pick="${esc(s.f.code)}" data-ctx="${esc(ctx||'')}">採用</span>` : (adopt && isAdmin() ? `<span class="btn sm gn" data-adopt-sub="${esc(s.f.code)}">💾 採用為代用</span>` : '<span class="sim-open">查看詳情 →</span>')}</span>
+    </button>`).join('');
+}
+
+/* ============================================================
+   GATE
+   ============================================================ */
+function viewGate(){
+  const o = CONFIG.OWNER, named = !!o.name;
+  return `
+  <div class="gate-hero">
+    <span class="eyebrow">👋 第一次使用也沒問題</span>
+    <h1>查布、找代用布，從這裡開始</h1>
+    <p class="lede">輸入布號、款號或完整規格，就能查資料與比對相似布料。</p>
+  </div>
+  <div class="gate-search">
+    <div class="gate-mode"><span>1</span>團隊成員：直接輸入原布資料，搜尋代用布</div>
+    <div class="searchbar">
+      <span class="ic">🔍</span>
+      <input id="gateq" aria-label="搜尋布號、款號或布料規格" placeholder="輸入布號、款號或規格，例如 AW-1164" autocomplete="off">
+      <button class="btn" id="gatego">以團隊成員身分搜尋</button>
+    </div>
+    <p class="hint">不知道怎麼輸入？試試：
+      <button class="example-btn" data-gate-example="AW-1164">AW-1164</button>
+      <button class="example-btn" data-gate-example="Jersey">Jersey</button>
+      <button class="example-btn" data-gate-example="88% Polyester 12% Spandex 190gsm">88% Polyester 12% Spandex 190gsm</button>
+    </p>
+    ${named
+      ? `<p class="gate-owner-link">是 DICK'S 負責人？<button class="linklike" data-role="owner">切換到負責人模式（採用布料、管理公檔）→</button></p>`
+      : `<details class="owner-setup">
+           <summary>我是 DICK'S 負責人（第一次設定）</summary>
+           <div class="setname">
+             <input id="ownname" aria-label="負責人姓名" placeholder="輸入負責人姓名" autocomplete="off">
+             <button class="btn sm" id="ownsave">設定並進入負責人模式</button>
+           </div>
+         </details>`}
+  </div>`;
+}
+
+/* ============================================================
+   TAB 1 — 找款式 / 布料
+   ============================================================ */
+function viewSearch(){
+  const r = State.search.result;
+  if(r){
+    if(r.kind === 'fabric')  return viewFabric(r.code);
+    if(r.kind === 'style')   return viewStyle(r.key);
+    if(r.kind === 'multi')   return viewMulti(r.q, r.list);
+    if(r.kind === 'spec')    return viewSpecResult(r.q, r.target, r.ranked);
+    if(r.kind === 'none')    return viewNotFound(r.q);
+  }
+  const counts = {};
+  DATA.forEach(f => f.fibers.forEach(x => { counts[x.f] = (counts[x.f]||0)+1; }));
+  const fibKeys = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
+  const styles = Store.list('style:');
+  const ownerMode = isAdmin();
+  return `
+  ${ownerMode ? `<section class="quickstart" aria-label="負責人工作選擇">
+    <div class="quickstart-h"><div><h2>負責人工作區：今天要做什麼？</h2><p>直接選擇工作，系統會帶你到正確的位置。</p></div></div>
+    <div class="guide-grid">
+      <button class="guide-card" data-quick="search"><span class="num">1</span><span class="gt">查布號或款號</span><span class="gd">已有編號時，從搜尋框最快找到資料。</span></button>
+      <button class="guide-card" data-quick="spec"><span class="num">2</span><span class="gt">用規格找代用布</span><span class="gd">貼上成分、布種與克重，自動排列相似候選。</span></button>
+      <button class="guide-card" data-quick="excel"><span class="num">3</span><span class="gt">批次處理 BOM</span><span class="gd">匯入 Excel，一次比對並採用多筆資料。</span></button>
+      <button class="guide-card" data-quick="pending"><span class="num">4</span><span class="gt">處理團隊請求</span><span class="gd">查看成員回報、補齊缺少的布料資料。</span></button>
+    </div>
+  </section>` : `<span class="eyebrow">🧩 團隊成員・代用布搜尋</span>`}
+  <section class="task-block">
+  <h1>${ownerMode ? '搜尋布料 / 款號' : '搜尋代用布料'}</h1>
+  <p class="lede">${ownerMode ? '輸入你手上的資訊；布號、款號、布種、成分或完整規格都可以。' : '把客戶原布的規格貼到下方，系統會直接依相似度排列可用的代用布。'}</p>
+  ${ownerMode ? '' : `<div class="banner" style="margin-top:16px;margin-bottom:0">建議包含：<b>布種＋成分比例＋克重</b>。資訊越完整，推薦結果越準確。</div>`}
+  <div class="searchbar">
+    <span class="ic">🔍</span>
+    <input id="q" type="search" aria-label="${ownerMode?'搜尋布號、款號或布料規格':'輸入原布規格以搜尋代用布'}" placeholder="${ownerMode?'例如 AW-1164、Jersey，或貼上完整規格':'貼上原布規格，例如 Jersey 88% Polyester 12% Spandex 190gsm'}" value="${esc(State.search.q)}" autocomplete="off">
+    <button class="btn" id="go">${ownerMode?'搜尋':'搜尋代用布'}</button>
+    <button class="btn ghost" id="clr">清除</button>
+  </div>
+  <p class="hint">點範例直接試：
+    ${ownerMode ? `<button class="example-btn" data-example="AW-1164">AW-1164</button>` : ''}
+    <button class="example-btn" data-example="Jersey 88% Polyester 12% Spandex 190gsm">Jersey 88% Polyester 12% Spandex 190gsm</button>
+  </p>
+
+  ${ownerMode ? `<div class="filters">
+    <span class="lab">布種</span>
+    <button class="chip ${State.search.type==='all'?'on':''}" data-type="all">全部 <span class="n">${DATA.length}</span></button>
+    <button class="chip ${State.search.type==='Knit'?'on':''}" data-type="Knit">針織 <span class="n">${DATA.filter(f=>f.type==='Knit').length}</span></button>
+    <button class="chip ${State.search.type==='Woven'?'on':''}" data-type="Woven">梭織 <span class="n">${DATA.filter(f=>f.type==='Woven').length}</span></button>
+  </div>
+  <button class="adv-toggle" id="advt">進階篩選 ▾</button>
+  <div class="adv ${State.search.adv?'open':''}">
+    <div class="adv-row"><span class="lab">含纖維</span>
+      ${fibKeys.map(k => `<button class="chip soft ${State.search.fibers.has(k)?'on':''}" data-fib="${k}">
+        <span class="dot" style="background:${fiberColor(k)}"></span>${FIBER_ZH[k]||k} <span class="n">${counts[k]}</span></button>`).join('')}
+    </div>
+    <div class="adv-row">
+      <select class="pick" id="gsmsel">
+        <option value="all">克重不限</option><option value="0-120">輕・120g 以下</option>
+        <option value="120-200">中・120–200g</option><option value="200-300">重・200–300g</option>
+        <option value="300-9999">厚・300g 以上</option>
+      </select>
+      <select class="pick" id="sortsel">
+        <option value="code">依布號排序</option><option value="gsm">依克重排序</option><option value="sub">依布種排序</option>
+      </select>
+    </div>
+  </div>` : ''}
+  </section>
+  ${ownerMode && styles.length ? `<div class="zone adopted-zone">
+    <div class="zone-h"><span class="t">已採用款號</span><span class="n"><b>${styles.length}</b> 筆</span></div>
+    <div class="cards">${styles.slice(0,12).map(k => {
+      const s = Store.get(k);
+      const f = s && s.main ? findFabric(s.main.code) : null;
+      return `<button class="fcard" data-style="${esc(k.slice(6))}">
+        <span class="code">${esc(s ? s.style : k)}</span>
+        <span class="line">${s && s.bom ? 'BOM ' + esc(s.bom) + '<br>' : ''}${f ? esc(f.sub||'') + ' · ' + esc(f.code) : '主布未指定'}</span>
+        <span class="foot"><span>${s && s.main && s.main.originalCode ? '<span class="pill rec">代用</span>' : '<span class="pill act">actual</span>'}</span>
+        <span class="gsm">${f && f.gsm != null ? f.gsm + ' g' : '—'}</span></span>
+      </button>`;
+    }).join('')}</div></div>` : ''}
+  ${ownerMode ? `<div class="zone library-zone" id="zone">${zoneHTML()}</div>` : ''}`;
+}
+function zoneHTML(){
+  const items = visible();
+  const active = filterActive();
+  return `<div class="zone-h">
+      <span class="t">${active ? '篩選結果' : '全部布料'}</span>
+      <span><span class="n"><b>${items.length}</b> 筆</span>
+      ${active ? ' ・ <button class="link" id="reset">清除篩選</button>' : ''}
+      ・ <button class="link" id="exp">匯出 Excel</button></span>
+    </div>
+    ${items.length ? `<div class="cards">${items.map(cardHTML).join('')}</div>`
+      : `<div class="empty"><div class="ico">🔍</div><p class="t">沒有符合的布</p>
+         <p class="d">放寬克重或取消纖維篩選再試。庫內共 ${DATA.length} 筆。</p></div>`}`;
+}
+
+function viewFabric(code){
+  const f = findFabric(code);
+  if(!f){ State.search.result = null; return viewSearch(); }
+  const sims = rankAgainst(f, DATA).slice(0,5);
+  const usedIn = Store.list('style:').map(k => Store.get(k)).filter(s =>
+    s && ((s.main && normCode(s.main.code) === f.key) || (s.accessories||[]).some(a => normCode(a.code) === f.key)));
+  return `
+  <button class="back" id="back">← 回搜尋</button>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="code">${esc(f.code)}</span>${typePill(f)}
+      ${f.incomplete?'<span class="pill miss">資料待補</span>':''}
+    </div>
+    <div class="panel-b">
+      <div class="use-block">
+        <div class="use-specs">
+          <div class="spec-item"><div class="k">布種</div><div class="v ${f.sub?'':'na'}">${esc(f.sub||'未填')}</div></div>
+          <div class="spec-item"><div class="k">成分</div><div class="v ${f.comp?'':'na'}">${esc(f.comp||'未填')}</div><div class="spec-bar">${bar(f.fibers)}</div></div>
+          <div class="spec-item"><div class="k">克重</div><div class="v ${f.gsm==null?'na':''}">${f.gsm==null?'未填':f.gsm+' g/m²'}</div></div>
+          <div class="spec-item"><div class="k">彈性</div><div class="v">${f.spandex?'含 Spandex':'無彈性纖維'}</div></div>
+          <div class="spec-item"><div class="k">來源資料</div><div class="v">${(f.src||[]).map(s=>`<span class="tag">${s==='scan'?'📁 Scan':'📊 Excel'}</span>`).join('')||'<span class="na">—</span>'}</div></div>
+        </div>
+      </div>
+      ${usedIn.length ? `<p class="simhead">用在這些款號</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${usedIn.map(s =>
+          `<button class="tag" data-style="${esc(s.style + (s.bom?'_'+s.bom:''))}" style="cursor:pointer">${esc(s.style)}${s.bom?' / '+esc(s.bom):''}</button>`).join('')}</div>` : ''}
+      ${isAdmin() ? `<div class="adminbox">
+        <p class="simhead" style="margin:0 0 10px">⭐ 管理員操作 — 採用到款號</p>
+        <div class="acts">
+          <button class="btn" data-adopt-main="${esc(f.code)}">⭐ 設為主布</button>
+          <button class="btn ghost" data-adopt-acc="${esc(f.code)}">＋ 設為配布</button>
+          <button class="btn ghost" data-adopt-sub="${esc(f.code)}">💾 採用為代用布</button>
+        </div>
+        <p class="note" style="margin-top:8px">把這塊布登記到一個款號。只有負責人看得到這個面板。</p>
+        <div class="acts" style="margin-top:6px"><button class="btn ghost" data-del-fab="${esc(f.code)}" style="color:var(--rd)">🗑 刪除這塊布料</button></div>
+      </div>` : ''}
+      <p class="simhead">庫內相似布（可採用為代用）・前 5 筆</p>
+      ${simRows(sims, false, null, true)}
+      <p class="note"><b>分數越高代表規格越相似</b>；結果只供初步篩選，不代表最終合格判定。</p>
+      <div class="acts">
+        <button class="btn ghost" data-copy="${esc(f.code)}">複製布號</button>
+        <button class="btn ghost" data-copypath="${esc(f.code)}">複製掃描資料夾路徑</button>
+        ${isAdmin() ? `<button class="btn ghost" data-edit-fab="${esc(f.code)}">✏️ 改布料資訊</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function viewMulti(q, list){
+  return `<button class="back" id="back">← 回搜尋</button>
+  <div class="qbar"><span class="lab">查詢</span><span class="val">${esc(q)}</span>
+    <button class="clr" id="clr2">✕ 清除</button></div>
+  <div class="zone result-zone"><div class="zone-h"><span class="t">符合的布料</span><span class="n"><b>${list.length}</b> 筆</span></div>
+  <div class="cards">${list.map(cardHTML).join('')}</div></div>`;
+}
+
+function viewSpecResult(q, target, ranked){
+  const fibTxt = target.fibers.length
+    ? target.fibers.map(x => x.p + '% ' + (FIBER_ZH[x.f]||x.f)).join(' / ') : '未讀到成分';
+  return `<button class="back" id="back">← 回搜尋</button>
+  <div class="qbar"><span class="lab">規格</span><span class="val">${esc(q)}</span>
+    <button class="clr" id="clr2">✕ 清除</button></div>
+  <div class="parsed">讀到：<b>${esc(target.sub||'布種未指定')}</b> ・ ${esc(fibTxt)} ・ ${target.gsm?target.gsm+'g':'克重未指定'}</div>
+  <div class="zone result-zone">
+    <div class="zone-h"><span class="t">相似度排序</span><span class="n">庫內 <b>${DATA.length}</b> 筆全部比對</span></div>
+    ${simRows(ranked.slice(0,8), false, null, true)}
+    <p class="note"><b>分數越高代表規格越相似</b>；請點選候選布查看完整資料。</p>
+  </div>`;
+}
+
+function viewNotFound(q){
+  const adm = isAdmin();
+  return `<button class="back" id="back">← 回搜尋</button>
+  <div class="qbar"><span class="lab">查詢</span><span class="val">${esc(q)}</span>
+    <button class="clr" id="clr2">✕ 清除</button></div>
+  <div class="panel"><div class="panel-b" style="text-align:center;padding:34px 24px">
+    <div style="font-size:2rem">🔍</div>
+    <h2 class="sec" style="margin:10px 0 8px">找不到 ${esc(q)}</h2>
+    <p class="lede" style="max-width:520px;margin:0 auto">公檔裡沒有這塊布，可能是新布還沒登記或布號打錯。</p>
+    <div style="max-width:560px;margin:20px auto 0;text-align:left">
+      <div class="nform">
+        <div class="lbl">🔍 布號是對的，幫我找代用布</div>
+        <textarea id="fsi-spec" placeholder="貼入這塊布的規格：布種 + 成分 + 克重
+例：Jersey 88% Polyester 12% Spandex 190gsm"></textarea>
+        <div class="row"><button class="btn gn" id="fsi-go">找代用布</button></div>
+      </div>
+      ${adm ? '' : `<div class="nform">
+        <div class="lbl">📩 通知 DICK'S 負責人新增這塊布</div>
+        <textarea id="notify-msg" placeholder="附訊息（選填），例如：我在做 D102345，需要這塊布…"></textarea>
+        <div class="row">
+          <button class="btn ghost" id="clr3">取消</button>
+          <button class="btn" data-notify="${esc(q)}">送出通知</button>
+        </div>
+      </div>`}
+    </div>
+  </div></div>
+  <div class="banner or" style="margin-top:16px">💡 常見原因：布號前後綴打錯，或新布還沒掃描進公檔。</div>`;
+}
+
+function viewStyle(key){
+  const s = Store.get('style:'+key);
+  if(!s){ State.search.result = null; return viewSearch(); }
+  const main = s.main ? findFabric(s.main.code) : null;
+  const isSub = !!(s.main && s.main.originalCode);
+  const accs = (s.accessories||[]).map(a => ({ a, f: findFabric(a.code) }));
+  const hist = (Store.get('history')||[]).filter(h => h.style === s.style);
+  return `<button class="back" id="back">← 回搜尋</button>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="code">${esc(s.style)}</span>
+      ${s.bom ? `<span class="tag">BOM ${esc(s.bom)}</span>` : ''}
+      ${s.season ? `<span class="tag">${esc(s.season)}</span>` : ''}
+      ${isSub ? '<span class="pill rec">採用代用布</span>' : '<span class="pill act">✓ actual</span>'}
+    </div>
+    <div class="panel-b">
+      ${main ? `
+      <div class="use-block">
+        <div class="use-lab">${isSub?'這款採用的布料（代用布）':'這款採用的主布'}</div>
+        <div class="use-main">
+          <b class="mono use-code">${esc(main.code)}</b> ${typePill(main)}
+          ${isSub ? '<span class="pill rec">代用</span>' : '<span class="pill act">✓ actual</span>'}
+        </div>
+        <div class="use-specs">
+          <div class="spec-item"><div class="k">布種</div><div class="v">${esc(main.sub||'—')}</div></div>
+          <div class="spec-item"><div class="k">成分</div><div class="v">${esc(main.comp||'—')}</div><div class="spec-bar">${bar(main.fibers)}</div></div>
+          <div class="spec-item"><div class="k">克重</div><div class="v">${main.gsm==null?'—':main.gsm+' g/m²'}</div></div>
+        </div>
+        ${isSub ? `<div class="compare">
+          <div class="cmp-row cmp-orig"><span class="cmp-lab">客人原指定</span><span class="cmp-val">${esc(s.main.originalCode||'—')}</span></div>
+          <div class="cmp-arrow">改用代用布 ↓</div>
+          <div class="cmp-row cmp-actual"><span class="cmp-lab">實際採用</span><span class="cmp-val"><b class="mono">${esc(main.code)}</b>${main.comp?' · '+esc(main.comp):''}${main.gsm!=null?' · '+main.gsm+' g/m²':''}</span></div>
+        </div>` : ''}
+      </div>` : `<div class="empty"><div class="ico">⚠️</div><p class="t">主布尚未指定</p></div>`}
+
+      ${accs.length ? `<p class="simhead">配布 (${accs.length})</p>
+        <div class="cards">${accs.map(x => x.f ? cardHTML(x.f) :
+          `<div class="fcard"><span class="code">${esc(x.a.code)}</span>
+           <span class="line" style="color:var(--rd)">公檔缺這塊布</span></div>`).join('')}</div>` : ''}
+
+      <div class="acts">
+        ${main ? `<button class="btn ghost" data-open="${esc(main.code)}">看主布完整資料</button>` : ''}
+        ${isAdmin() ? `<button class="btn ghost" id="add-acc">＋ 新增配布</button>
+        <button class="btn ghost dg-txt" data-del-style="${esc(key)}" style="color:var(--rd)">刪除採用</button>` : ''}
+      </div>
+      ${hist.length ? `<p class="simhead">這款的操作紀錄</p>
+        ${hist.slice(0,8).map(h => `<div style="font-size:.83rem;color:var(--t2);padding:6px 0;border-top:1px solid var(--bd2)">
+          <span class="mono" style="color:var(--t3)">${esc(h.ts)}</span> ・ ${esc(h.user)} ${esc(ACTION_LABEL[h.action]||h.action)}
+          ${h.code?'<span class="mono"> '+esc(h.code)+'</span>':''}</div>`).join('')}` : ''}
+    </div>
+  </div>`;
+}
+
+function runSearch(){
+  const q = State.search.q.trim();
+  if(!q){ State.search.result = null; render(); return; }
+  // 1) 款號 —— 先比對完整款號 key（精準命中優先），再比對前綴
+  const exactStyle = Store.list('style:').find(k => k.slice(6).toUpperCase() === q.toUpperCase());
+  if(exactStyle){ State.search.result = { kind:'style', key:exactStyle.slice(6) }; render(); return; }
+  const styleKeys = Store.list('style:').filter(k => k.slice(6).toUpperCase().startsWith(q.toUpperCase()));
+  if(styleKeys.length === 1){ State.search.result = { kind:'style', key:styleKeys[0].slice(6) }; render(); return; }
+  // 2) 布號完全命中
+  const exact = findFabric(q);
+  if(exact){ State.search.result = { kind:'fabric', code:exact.code }; render(); return; }
+  // 3) 關鍵字命中多筆
+  const qq = q.toUpperCase(), qk = normCode(q);
+  const list = DATA.filter(f => f.key.includes(qk) || (f.sub||'').toUpperCase().includes(qq) || (f.comp||'').toUpperCase().includes(qq));
+  if(list.length === 1){ State.search.result = { kind:'fabric', code:list[0].code }; render(); return; }
+  if(list.length > 1){ State.search.result = { kind:'multi', q, list }; render(); return; }
+  // 4) 看起來是規格 → 直接推薦
+  const spec = parseSpec(q);
+  if(spec && (spec.fibers.length || spec.gsm != null)){
+    State.search.result = { kind:'spec', q, target:spec, ranked:rankAgainst(spec, DATA) }; render(); return;
+  }
+  // 5) 找不到
+  State.search.result = { kind:'none', q }; render();
+  if(!isAdmin() && !(State.identity && State.identity.name)) openMemberNamePicker();
+}
+
+/* ============================================================
+   TAB 2 — 待處理請求
+   ============================================================ */
+function viewPending(){
+  if(!isAdmin()) return `<div class="empty"><div class="ico">🔒</div><p class="t">只有負責人看得到這頁</p>
+    <p class="d">請在右上角切換身分。</p></div>`;
+  const all = Store.get('pendingRequests') || [];
+  const un = all.filter(r => !r.resolved), done = all.filter(r => r.resolved);
+  return `
+  <h1>待處理請求</h1>
+  <div class="banner" style="margin-top:18px">📩 團隊成員通知你新增布料的清單。處理完按「✓ 已處理」。</div>
+  <h2 class="sec" style="font-size:1rem;color:var(--ac);margin:18px 0 11px">未處理 (${un.length})</h2>
+  ${un.length ? un.map(r => prCard(r,false)).join('')
+    : `<div class="empty" style="padding:30px"><div class="ico">✨</div><p class="t">沒有待補請求</p></div>`}
+  ${done.length ? `<h2 class="sec" style="font-size:1rem;color:var(--t2);margin:22px 0 11px">已處理 (${done.length})</h2>`
+    + done.slice(0,20).map(r => prCard(r,true)).join('') : ''}`;
+}
+function prCard(r, isDone){
+  return `<div class="pr ${isDone?'done':''}">
+    <div class="ico">${isDone?'✅':'📩'}</div>
+    <div class="info">
+      <div class="rd">${esc(r.code)}</div>
+      <div class="meta">來自 <b>${esc(r.fromUser||'某成員')}</b> ・ ${esc(r.ts)}</div>
+      ${r.message ? `<div class="msg">${esc(r.message)}</div>` : ''}
+    </div>
+    <div>${isDone ? `<span style="font-size:.78rem;color:var(--t3)">已處理${r.resolvedBy?' by '+esc(r.resolvedBy):''}</span>`
+      : `<button class="btn gn sm" data-pr="${esc(r.id)}">✓ 已處理</button>`}</div>
+  </div>`;
+}
+
+/* ============================================================
+   TAB 3 — 批次匯入
+   ============================================================ */
+const COL_HINTS = {
+  style: /dev\.?\s*style|style\s*#|style\s*no|款號|款式/i,
+  bom:   /bom/i,
+  code:  /fabric\s*(code|#|no)|material\s*(code|#|no)|布號|料號|supplier\s*ref/i,
+  comp:  /composition|content|fiber|成分/i,
+  gsm:   /weight|gsm|g\/m|克重/i,
+  sub:   /fabric\s*type|construction|布種|織法/i,
+  season:/season|季/i
+};
+function detectCols(header){
+  const cols = {};
+  header.forEach((h, i) => {
+    const s = String(h||'').trim();
+    if(!s) return;
+    for(const k in COL_HINTS){ if(cols[k] === undefined && COL_HINTS[k].test(s)) cols[k] = i; }
+  });
+  return cols;
+}
+function buildExcelRows(){
+  const X = State.excel;
+  const rows = [];
+  for(let i = X.headerIdx + 1; i < X.raw.length; i++){
+    const r = X.raw[i];
+    if(!r || r.every(c => c === '' || c == null)) continue;
+    const cell = k => (X.cols[k] === undefined ? '' : String(r[X.cols[k]] ?? '').trim());
+    const code = cell('code'), comp = cell('comp'), sub = cell('sub');
+    const gsmRaw = cell('gsm');
+    const gsm = gsmRaw ? (parseInt(String(gsmRaw).replace(/[^\d]/g,''),10) || null) : null;
+    const specText = [sub, comp, gsm ? gsm+'gsm' : ''].filter(Boolean).join(' ');
+    let status = 'empty', match = null, cands = [];
+    if(code){
+      match = findFabric(code);
+      if(match) status = 'actual';
+      else {
+        const t = parseSpec(specText);
+        if(t && (t.fibers.length || t.gsm != null)){ status = 'recommend'; cands = rankAgainst(t, DATA).slice(0,5); }
+        else status = 'empty';
+      }
+    } else {
+      const t = parseSpec(specText);
+      if(t && (t.fibers.length || t.gsm != null)){ status = 'recommend'; cands = rankAgainst(t, DATA).slice(0,5); }
+    }
+    const style = cell('style');
+    const bom = cell('bom');
+    const key = style ? (style + (bom ? '_' + bom : '')) : '';
+    rows.push({ idx:rows.length, style, bom, key, code, comp, sub, gsm, season:cell('season'),
+                specText, status, matchCode: match ? match.code : null, cands,
+                committed: key ? !!Store.get('style:'+key) : false, picked:null });
+  }
+  X.rows = rows;
+}
+function viewExcel(){
+  const X = State.excel;
+  if(!X.raw){
+    return `
+    <h1>批次匯入</h1>
+    <p class="lede">把客人的 BOM Excel 丟進來，系統會比對 DICK'S 公檔、標出 actual / 需推薦 / 布號缺，再批次採用。</p>
+    <div class="drop" id="xl-drop" style="margin-top:24px">
+      <div class="ico">📂</div>
+      <h3>把 Excel 拖進來，或點此選檔</h3>
+      <p>支援 .xlsx / .xls / .csv。自動偵測標題列與欄位，偵測不到可手動指定。</p>
+      <input type="file" id="xl-input" accept=".xlsx,.xls,.csv">
+    </div>
+    <div class="banner" style="margin-top:16px">💡 解析全在你的瀏覽器裡跑，<b>檔案不會上傳到任何伺服器</b>。只有按下「採用」的決定才會寫進紀錄。</div>`;
+  }
+  let act=0, rec=0, emp=0, com=0;
+  X.rows.forEach(r => { if(r.committed) com++; if(r.status==='actual') act++; else if(r.status==='recommend') rec++; else emp++; });
+  const filtered = X.rows.filter(r =>
+    X.filter==='all' ? true :
+    X.filter==='committed' ? r.committed :
+    X.filter==='actual' ? (r.status==='actual' && !r.committed) :
+    X.filter==='recommend' ? r.status==='recommend' : r.status==='empty');
+  const colName = i => i === undefined ? '（未指定）' : (X.headerRow[i] || 'Col'+String.fromCharCode(65+i));
+  return `
+  <h1>批次匯入</h1>
+  <div class="xsum" style="margin-top:22px">
+    <div style="flex:1;min-width:190px">
+      <div class="fname">📄 ${esc(X.fileName)}</div>
+      <div class="fmeta">工作表 <b>${esc(X.sheetName)}</b> ・ 標題在第 ${X.headerIdx+1} 列 ・ ${X.rows.length} 資料列</div>
+    </div>
+    <div class="stat"><div class="n">${X.rows.length}</div><div class="l">總列</div></div>
+    <div class="stat gn"><div class="n">${act}</div><div class="l">Actual</div></div>
+    <div class="stat or"><div class="n">${rec}</div><div class="l">需推薦</div></div>
+    <div class="stat rd"><div class="n">${emp}</div><div class="l">無法比對</div></div>
+    <div class="stat"><div class="n">${com}</div><div class="l">已採用</div></div>
+    <div><button class="btn ghost sm" id="xl-reset">換檔案</button></div>
+  </div>
+  <div class="colpick">
+    <span class="lab">欄位對應</span>
+    ${['style','bom','code','sub','comp','gsm','season'].map(k => `
+      <label style="display:flex;align-items:center;gap:5px">
+        <span style="color:var(--t3)">${({style:'款號',bom:'BOM',code:'布號',sub:'布種',comp:'成分',gsm:'克重',season:'季別'})[k]}</span>
+        <select class="pick" data-col="${k}" style="padding:6px 9px;font-size:.83rem">
+          <option value="">（無）</option>
+          ${X.headerRow.map((h,i) => `<option value="${i}" ${X.cols[k]===i?'selected':''}>${esc(String(h||'Col'+String.fromCharCode(65+i)))}</option>`).join('')}
+        </select>
+      </label>`).join('')}
+  </div>
+  <div class="filters" style="margin-top:0">
+    <span class="lab">篩選</span>
+    ${[['all','全部',X.rows.length],['committed','已採用',com],['actual','Actual 待採用',act],['recommend','需推薦',rec],['empty','無法比對',emp]]
+      .map(a => `<button class="chip ${X.filter===a[0]?'on':''}" data-xlf="${a[0]}">${a[1]} <span class="n">${a[2]}</span></button>`).join('')}
+    <span style="flex:1"></span>
+    ${isAdmin() && act ? `<button class="btn gn sm" id="xl-commit-all">✓ 批次採用全部 Actual 行</button>` : ''}
+  </div>
+  <div class="tbl" style="margin-top:16px">
+    <div class="hrow x-grid"><span>#</span><span>款號 / BOM</span><span>狀態</span><span>布料解析</span><span>克重</span><span style="text-align:right">動作</span></div>
+    ${filtered.length ? filtered.map(r => excelRow(r)).join('')
+      : `<div style="padding:34px;text-align:center;color:var(--t3);font-size:.88rem">這個篩選沒有資料</div>`}
+  </div>`;
+}
+function excelRow(r){
+  const cls = r.committed ? 'ok' : (r.status !== 'actual' ? 'warn' : '');
+  const badge = r.status==='actual' ? '<span class="pill act">actual</span>'
+              : r.status==='recommend' ? '<span class="pill rec">需推薦</span>'
+              : '<span class="pill miss">無法比對</span>';
+  const exp = State.excel.expanded === r.idx;
+  return `<div class="row x-grid ${cls}">
+      <span class="mono" style="color:var(--t3)">${r.idx+1}</span>
+      <span><b class="mono">${esc(r.style||'—')}</b>${r.bom?`<br><span style="color:var(--t2);font-size:.92em">BOM ${esc(r.bom)}</span>`:''}</span>
+      <span>${badge}${r.committed?'<br><span style="font-size:.75rem;color:var(--gn)">已採用</span>':''}</span>
+      <span><span class="mono">${esc(r.code||'（無布號）')}</span>${r.matchCode&&r.matchCode!==r.code?`<br><span style="font-size:.8rem;color:var(--gn)">→ 公檔 ${esc(r.matchCode)}</span>`:''}
+        <br><span style="color:var(--t2);font-size:.88em">${esc([r.sub,r.comp].filter(Boolean).join(' · ')||'—')}</span></span>
+      <span class="mono">${r.gsm==null?'—':r.gsm+'g'}</span>
+      <span style="text-align:right">${
+        r.status==='actual' && isAdmin() && !r.committed ? `<button class="btn sm" data-xl-commit="${r.idx}">採用</button>` :
+        r.status==='recommend' ? `<button class="btn ghost sm" data-xl-exp="${r.idx}">${exp?'收合':'看候選'}</button>` : '—'}</span>
+    </div>
+    ${exp ? `<div style="padding:14px 16px;background:var(--hd);border-top:1px solid var(--bd2)">
+      <div class="lab" style="margin-bottom:9px">公檔沒有 <b class="mono">${esc(r.code||'（無布號）')}</b>，依規格排出候選：</div>
+      ${r.cands.length ? simRows(r.cands, true, String(r.idx)) : '<p class="note">規格資訊不足，排不出候選。</p>'}
+    </div>` : ''}`;
+}
+
+/* ============================================================
+   TAB 4 — 操作紀錄
+   ============================================================ */
+function viewHistory(){
+  const all = Store.get('history') || [];
+  let list = all;
+  if(State.history.action !== 'all') list = list.filter(h => h.action === State.history.action);
+  if(State.history.q){
+    const q = State.history.q.toLowerCase();
+    list = list.filter(h => JSON.stringify(h).toLowerCase().includes(q));
+  }
+  return `
+  <h1>操作紀錄</h1>
+  <p class="lede">所有操作紀錄，目前 ${all.length} 筆。</p>
+  <div class="filters" style="margin-top:20px">
+    <input class="tin" id="hf-q" placeholder="搜尋款號、布號、操作人…" value="${esc(State.history.q)}" style="flex:1;min-width:200px">
+    <select class="pick" id="hf-action">
+      <option value="all">全部操作</option>
+      ${Object.keys(ACTION_LABEL).map(k => `<option value="${k}" ${State.history.action===k?'selected':''}>${ACTION_LABEL[k]}</option>`).join('')}
+    </select>
+    <button class="btn ghost sm" id="hf-exp">📤 匯出 Excel</button>
+    ${isAdmin() && all.length ? `<button class="btn ghost sm" id="hf-clear" style="color:var(--rd)">清空紀錄</button>` : ''}
+  </div>
+  <div class="tbl" style="margin-top:18px">
+    <div class="hrow h-grid"><span>時間</span><span>操作</span><span>操作人員</span><span>款號</span><span>布號</span><span>來源</span><span>編輯</span></div>
+    ${list.length ? list.slice(0,200).map(h => `<div class="row h-grid">
+        <span class="dt">${esc(h.ts||'')}</span>
+        <span>${esc(ACTION_LABEL[h.action]||h.action||'')}</span>
+        <span>${esc(h.user||'')}${h.role==='owner'?' <span class="tag" style="font-size:.68rem">負責人</span>':''}</span>
+        <span>${h.style?`<a href="#" data-style="${esc(h.style + (h.bom?'_'+h.bom:''))}">${esc(h.style)}</a>`:'—'}</span>
+        <span class="mono">${h.code?esc(h.code):'—'}${h.original?`<br><span style="color:var(--or);font-size:.85em">原 ${esc(h.original)}</span>`:''}</span>
+        <span style="color:var(--t2);font-size:.85em">${esc(h.source||'')}</span>
+        <span class="hact">${isAdmin() ? `${h.style ? `<button class="ic-btn" title="編輯款號" data-hist-edit="${esc(h.style + (h.bom?'_'+h.bom:''))}">✏️</button>` : ''}<button class="ic-btn" title="刪除這筆紀錄" data-hist-del-entry="${esc(h.fbid||h.id||'')}">🗑</button>` : ''}</span>
+      </div>`).join('')
+      : `<div style="padding:38px;text-align:center;color:var(--t3);font-size:.88rem">沒有符合的紀錄</div>`}
+    ${list.length > 200 ? `<div style="padding:12px;text-align:center;color:var(--t3);font-size:.83rem">… 還有 ${list.length-200} 筆，請用篩選縮小</div>` : ''}
+  </div>`;
+}
+
+/* ============================================================
+   TAB 5 — 系統設定
+   ============================================================ */
+function viewSettings(){
+  if(!isAdmin()) return `<div class="empty"><div class="ico">🔒</div><p class="t">只有負責人看得到這頁</p>
+    <p class="d">請在右上角切換身分。</p></div>`;
+  const sec = State.settings.section;
+  const secs = [['profile','個人資料'],['source','資料來源'],['sop','相似度規則'],['import','匯入公檔']];
+  return `
+  <h1>系統設定</h1>
+  <div class="stabs" style="margin-top:22px">
+    ${secs.map(a => `<button class="stab ${sec===a[0]?'a':''}" data-sec="${a[0]}">${a[1]}</button>`).join('')}
+  </div>
+  ${sec==='profile'?setProfile():sec==='source'?setSource():sec==='sop'?setSOP():setImport()}`;
+}
+function setProfile(){
+  return `<div class="sset">
+    <h3><span>個人資料</span></h3>
+    <div class="grid">
+      <div class="fld"><div class="k">品牌</div><div class="v">DICK'S</div></div>
+      <div class="fld"><div class="k">身分</div><div class="v">負責人</div></div>
+      <div class="fld"><div class="k">姓名</div><div class="v">${esc(userName())}</div></div>
+    </div>
+    <div class="acts">
+      <input class="tin" id="pf-name" placeholder="改姓名" value="${esc(State.identity.name||'')}">
+      <button class="btn sm" id="pf-save">儲存</button>
+      <button class="btn ghost sm" id="pf-switch">切換身分</button>
+    </div>
+    <p class="note">姓名只存在這台瀏覽器。要讓全隊看到同一個負責人，請在檔案最上方 <code>CONFIG.OWNER.name</code> 填死。</p>
+  </div>`;
+}
+function setSource(){
+  const st = Sync.status;
+  const label = st==='ok' ? '已同步' : st==='connecting' ? '同步中' : '離線（只用本機資料）';
+  return `<div class="sset">
+    <h3><span>同步狀態</span><span class="meta">Firebase RTDB・全隊共用</span></h3>
+    <div class="grid">
+      <div class="fld"><div class="k">狀態</div><div class="v" style="color:${st==='ok'?'var(--gn)':st==='connecting'?'var(--or)':'var(--rd)'}">${label}</div></div>
+      <div class="fld"><div class="k">最後同步</div><div class="v">${Sync.lastAt ? esc(Sync.lastAt.toLocaleString('zh-TW',{hour12:false})) : '—'}</div></div>
+      <div class="fld"><div class="k">布料筆數</div><div class="v">${DATA.length}</div></div>
+      <div class="fld"><div class="k">已採用款號</div><div class="v">${Store.list('style:').length}</div></div>
+      <div class="fld"><div class="k">待處理請求</div><div class="v">${(Store.get('pendingRequests')||[]).filter(r=>!r.resolved).length}</div></div>
+      <div class="fld"><div class="k">操作紀錄</div><div class="v">${(Store.get('history')||[]).length}</div></div>
+    </div>
+    ${Sync.lastError ? `<div class="help" style="margin-top:14px;color:var(--rd)">最後一次錯誤：${esc(Sync.lastError)}</div>` : ''}
+    <div class="help" style="margin-top:14px">
+      節點位置（跟 GAP 版同一個 RTDB，但完全獨立、不碰 GAP 的資料）：<br>
+      <code>${esc(CONFIG.FB.fabrics)}</code> <code>${esc(CONFIG.FB.styles)}</code>
+      <code>${esc(CONFIG.FB.history)}</code> <code>${esc(CONFIG.FB.pending)}</code> <code>${esc(CONFIG.FB.config)}</code><br>
+      布料採 <b>per-key</b> 儲存（不是整包陣列），所以不會被別人存檔時覆蓋。
+    </div>
+    <div class="acts">
+      <button class="btn sm" id="src-pull">重新拉取雲端</button>
+      <button class="btn ghost sm" id="src-push">上傳目前 ${DATA.length} 筆布料到雲端</button>
+      <button class="btn ghost sm" id="src-export">匯出布料 Excel</button>
+      <button class="btn ghost sm" id="src-copy">複製掃描路徑</button>
+    </div>
+    <p class="note">「上傳布料」是整包覆蓋雲端的 <code>${esc(CONFIG.FB.fabrics)}</code> 節點，第一次建庫用；日常新增請走「匯入公檔」，那個只寫新增的。</p>
+  </div>
+  ${Sync.log.length ? `<div class="sset">
+    <h3><span>同步紀錄</span><span class="meta">最近 ${Sync.log.length} 筆</span></h3>
+    ${Sync.log.map(l => `<div class="rulerow" style="grid-template-columns:78px 1fr">
+      <span class="n">${esc(l.ts)}</span>
+      <span style="color:${l.kind==='err'?'var(--rd)':'var(--t2)'};font-size:.84rem">${esc(l.msg)}</span></div>`).join('')}
+  </div>` : ''}
+  <div class="sset">
+    <h3><span>掃描來源</span></h3>
+    <div class="fld"><div class="k">資料夾</div><div class="v mono" style="font-size:.82rem">${esc(CONFIG.UNC)}</div></div>
+    <p class="note">瀏覽器不能從網頁直接開 UNC 路徑，工具裡的「複製路徑」是貼到檔案總管用的。</p>
+  </div>`;
+}
+function setSOP(){
+  const rules = [
+    ['1','成分距離','兩塊布各纖維百分比差的絕對值總和 × 0.3，最多扣 '+SOP.compMax+' 分。完全相同不扣分','主要權重'],
+    ['2','纖維組成','纖維種類不同（例如 Nylon vs Polyester）會拉高距離，自動反映在第 1 條','主要權重'],
+    ['3','布種','同布種不扣；同為針織/梭織但布種不同扣 '+SOP.subDiff+' 分；跨針織梭織扣 '+SOP.typeCross+' 分','次要權重'],
+    ['4','克重','差距比例 × 70，最多扣 '+SOP.weightMax+' 分','次要權重'],
+    ['5','缺值','成分缺扣 '+SOP.missComp+'、布種缺扣 '+SOP.missSub+'、克重缺扣 '+SOP.missGsm+' 分','資料品質'],
+    ['6','布號比對','只做大小寫、空白、連字號正規化，不解析前後綴（DICK\'S 布號無統一命名規範）','比對規則']
+  ];
+  return `<div class="sset">
+    <h3><span>相似度規則</span><span class="meta">代用布排序用</span></h3>
+    <div class="help">
+      ⚠️ 這組規則是<b>內部近似邏輯，不是 DICK\'S 官方代用布標準</b>。
+      GAP 版的容差來自 Gap Appendix B（Chemical Finish A–M、Group A 纖維互換、幅寬縮率容差），
+      DICK\'S 公檔目前只有布種、成分、克重三個欄位，其餘維度無法納入計算。
+      分數只作排序參考，實際能不能代用仍需人工判斷。
+    </div>
+    ${rules.map(r => `<div class="rulerow">
+      <span class="n">${r[0]}</span>
+      <span><span class="nm">${esc(r[1])}</span><div class="lg">${esc(r[2])}</div></span>
+      <span style="font-size:.78rem;color:var(--t3)">${esc(r[3])}</span>
+    </div>`).join('')}
+  </div>`;
+}
+function setImport(){
+  const p = State.lib.pending;
+  return `<div class="sset">
+    <h3><span>匯入公檔 Excel</span><span class="meta">自動去重、含預覽</span></h3>
+    <div class="help">
+      上傳 DICK'S 布料公檔，系統先預覽「新增 / 已存在」筆數，確認後只寫入新增的布料。
+      布號比對用正規化後的字串（大小寫、空白、連字號統一），已存在的自動跳過。
+    </div>
+    <div class="adv-row">
+      <input type="file" id="lib-file" accept=".xlsx,.xls,.csv" style="font-size:.86rem">
+    </div>
+    ${p ? `<div class="parsed" style="margin-top:14px">
+      讀到 <b>${p.total}</b> 列：新增 <b>${p.add.length}</b> 筆、已存在 <b>${p.dup}</b> 筆、無布號略過 <b>${p.skip}</b> 筆
+      <div class="acts" style="margin-top:12px;padding-top:12px">
+        <button class="btn sm" id="lib-go">寫入 ${p.add.length} 筆</button>
+        <button class="btn ghost sm" id="lib-cancel">取消</button>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+/* ============================================================
+   APPBAR + TABS
+   ============================================================ */
+function availableTabs(){
+  return isAdmin()
+    ? [['search','🔍 找款式 / 布料'],['excel','📄 批次匯入'],['pending','📩 待處理請求'],['history','🕘 操作紀錄'],['settings','⚙️ 系統設定']]
+    : [['search','🧩 搜尋代用布'],['history','🕘 操作紀錄']];
+}
+function syncChip(){
+  const s = Sync.status;
+  const dot = s==='ok' ? 'var(--gn)' : s==='connecting' ? 'var(--or)' : 'var(--rd)';
+  const txt = s==='ok' ? '已同步' : s==='connecting' ? '同步中' : '離線';
+  const t = Sync.lastAt ? Sync.lastAt.toLocaleTimeString('zh-TW',{hour12:false}) : '';
+  return `<button class="idchip" id="syncchip" title="${esc(Sync.lastError||('最後同步 '+t))}">
+    <span style="width:8px;height:8px;border-radius:50%;background:${dot};display:inline-block"></span>
+    <span class="nm">${txt}</span><span class="sw">重新整理</span></button>`;
+}
+function renderBar(){
+  const right = $('bar-right');
+  const stats = DATA.length + ' 塊布 ・ ' + DATA.filter(f=>f.type==='Knit').length + ' 針織 / ' + DATA.filter(f=>f.type==='Woven').length + ' 梭織';
+  if(!State.identity){ right.innerHTML = ''; }
+  else {
+    const mnm = (State.identity && State.identity.name) ? esc(State.identity.name) : '未署名';
+    const who = isAdmin()
+      ? `⭐ <span class="who">DICK'S 負責人</span> <span class="nm">・${esc(userName())}</span>`
+      : `<span class="who">團隊成員</span> <span class="nm">・${mnm}</span> <button class="sw" id="mname">署名</button>`;
+    right.innerHTML = `<span class="stats">${stats}</span>
+      <button class="idchip" id="help-guide" title="回到工作入口"><span class="who">${isAdmin()?'▦ 工作選擇':'？ 搜尋說明'}</span></button>
+      <span class="idchip">${who} <button class="sw" id="switch">切換</button></span>` + syncChip();
+    const sw = $('switch');
+    if(sw) sw.onclick = () => { State.identity = null; Store.set('identity', null); render(); };
+    const mn = $('mname');
+    if(mn) mn.onclick = () => openMemberNamePicker();
+  }
+  const sc = $('syncchip');
+  if(sc) sc.onclick = () => pullAll(true);
+  const hg = $('help-guide');
+  if(hg) hg.onclick = () => {
+    State.tab = 'search'; State.search.result = null; render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  const nb = $('navback');
+  if(nb){
+    nb.classList.toggle('hide', !State.identity);
+    nb.onclick = () => {
+      if(State.search.result){ State.search.result = null; render(); }
+      else if(State.tab !== 'search'){ State.tab = 'search'; render(); }
+      else { State.identity = null; Store.set('identity', null); render(); }
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+  }
+}
+function renderTabs(){
+  const el = $('mtabs');
+  if(!State.identity){ el.classList.add('hide'); el.innerHTML = ''; return; }
+  el.classList.remove('hide');
+  const pend = (Store.get('pendingRequests')||[]).filter(r => !r.resolved).length;
+  el.innerHTML = availableTabs().map(t => {
+    const cnt = (t[0] === 'pending' && pend && isAdmin()) ? `<span class="cnt">${pend}</span>` : '';
+    return `<button class="mtab ${State.tab===t[0]?'a':''}" data-tab="${t[0]}">${t[1]}${cnt}</button>`;
+  }).join('');
+  el.querySelectorAll('[data-tab]').forEach(b => {
+    b.onclick = () => {
+      State.tab = b.dataset.tab;
+      if(State.tab==='search') State.search.result = null;
+      render();
+      if(State.tab==='pending' || State.tab==='history') pullAll(false);   // 這兩頁最需要是最新的
+    };
+  });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+/* ===== 瀏覽器上一頁／返回整合（SPA history）——讓「上一步」在每個畫面都能用 ===== */
+let _navSuppress=false, _lastSig=null;
+function _sig(){
+  if(!State.identity) return 'gate';
+  const r=State.search.result;
+  return State.tab+'|'+(r?(r.kind+':'+(r.key||r.code||r.q||'')):'');
+}
+function _snap(){
+  const r=State.search.result;
+  return { __dsg:true, tab:State.tab, q:State.search.q, result: r?{kind:r.kind, key:r.key, code:r.code, q:r.q}:null };
+}
+function _syncHistory(){
+  if(_navSuppress) return;
+  if(!State.identity){ _lastSig=null; return; }
+  const sig=_sig();
+  if(sig===_lastSig) return;
+  const snap=_snap();
+  try{ if(_lastSig===null) history.replaceState(snap,''); else history.pushState(snap,''); }catch(e){}
+  _lastSig=sig;
+}
+function _restoreHist(st){
+  if(!st || !st.__dsg) return;
+  if(!State.identity) return;
+  _navSuppress=true;
+  State.tab = st.tab || 'search';
+  const r = st.result;
+  if(!r){ State.search.result=null; if(st.q!=null) State.search.q=st.q; render(); }
+  else if(r.kind==='style'){ State.search.result={kind:'style',key:r.key}; render(); }
+  else if(r.kind==='fabric'){ State.search.result={kind:'fabric',code:r.code}; render(); }
+  else { State.search.q = r.q||''; runSearch(); }
+  _lastSig=_sig();
+  _navSuppress=false;
+}
+window.addEventListener('popstate', function(e){ _restoreHist(e.state); });
+
+function render(){
+  renderBar(); renderTabs();
+  const host = $('tab-content');
+  if(!State.identity)              host.innerHTML = viewGate();
+  else if(State.tab === 'excel')   host.innerHTML = viewExcel();
+  else if(State.tab === 'pending') host.innerHTML = viewPending();
+  else if(State.tab === 'history') host.innerHTML = viewHistory();
+  else if(State.tab === 'settings') host.innerHTML = viewSettings();
+  else                             host.innerHTML = viewSearch();
+  attach();
+  _syncHistory();
+}
+function refreshList(){
+  const z = $('zone');
+  if(!z) return;
+  z.innerHTML = zoneHTML();
+  bindCommon(z);
+}
+
+function bindCommon(scope){
+  scope.querySelectorAll('[data-open]').forEach(b => b.onclick = e => {
+    if(e.target.closest('[data-pick],[data-adopt-sub],[data-adopt-main],[data-adopt-acc]')) return;
+    State.search.result = { kind:'fabric', code:b.dataset.open };
+    State.tab = 'search'; render(); window.scrollTo({top:0,behavior:'smooth'});
+  });
+  scope.querySelectorAll('[data-style]').forEach(b => b.onclick = e => {
+    e.preventDefault();
+    State.search.result = { kind:'style', key:b.dataset.style };
+    State.tab = 'search'; render(); window.scrollTo({top:0,behavior:'smooth'});
+  });
+  const rst = $('reset');
+  if(rst) rst.onclick = () => { const S = State.search; S.type='all'; S.gsm='all'; S.fibers.clear(); render(); };
+  const exp = $('exp'); if(exp) exp.onclick = exportFabrics;
+}
+
+function attach(){
+  const host = $('tab-content');
+  bindCommon(host);
+
+  /* gate */
+  host.querySelectorAll('[data-role]').forEach(b => b.onclick = () => {
+    const role = b.dataset.role;
+    if(role === 'owner' && !CONFIG.OWNER.name){
+      const inp = $('ownname'), v = inp ? inp.value.trim() : '';
+      if(!v){ toast('先輸入負責人姓名','or'); if(inp) inp.focus(); return; }
+      setIdentity('owner', v); return;
+    }
+    setIdentity(role, role === 'owner' ? CONFIG.OWNER.name : '');
+  });
+  const os = $('ownsave');
+  if(os) os.onclick = () => {
+    const v = $('ownname').value.trim();
+    if(!v){ toast('先輸入負責人姓名','or'); return; }
+    setIdentity('owner', v);
+  };
+  const gq = $('gateq');
+  if(gq){
+    const g = () => {
+      const v = gq.value.trim();
+      if(!v){ toast('請先輸入布號或原布規格','or'); gq.focus(); return; }
+      setIdentity('member',''); State.search.q = v; runSearch();
+    };
+    gq.onkeydown = e => { if(e.key === 'Enter') g(); };
+    $('gatego').onclick = g;
+    host.querySelectorAll('[data-gate-example]').forEach(b => b.onclick = () => {
+      gq.value = b.dataset.gateExample;
+      g();
+    });
+  }
+
+  /* search */
+  const q = $('q');
+  if(q){
+    q.oninput = e => { State.search.q = e.target.value; };
+    q.onkeydown = e => { if(e.key === 'Enter') runSearch(); };
+    host.querySelectorAll('[data-example]').forEach(b => b.onclick = () => {
+      State.search.q = b.dataset.example;
+      q.value = State.search.q;
+      runSearch();
+    });
+  }
+  host.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => {
+    const action = b.dataset.quick;
+    if(action === 'excel'){ State.tab = 'excel'; render(); return; }
+    if(action === 'pending'){ State.tab = 'pending'; render(); pullAll(false); return; }
+    if(action === 'browse'){
+      const zone = $('zone'); if(zone) zone.scrollIntoView({behavior:'smooth',block:'start'}); return;
+    }
+    if(q){
+      q.placeholder = action === 'spec' ? '貼上規格，例如 Jersey 88% Polyester 12% Spandex 190gsm' : '輸入布號或款號，例如 AW-1164';
+      q.scrollIntoView({behavior:'smooth',block:'center'}); q.focus();
+    }
+  });
+  const go = $('go'); if(go) go.onclick = runSearch;
+  const clr = $('clr'); if(clr) clr.onclick = () => { State.search.q=''; State.search.result=null; render(); };
+  ['back','clr2','clr3'].forEach(id => { const b = $(id); if(b) b.onclick = () => { State.search.result = null; render(); }; });
+  host.querySelectorAll('[data-type]').forEach(b => b.onclick = () => { State.search.type = b.dataset.type; render(); });
+  host.querySelectorAll('[data-fib]').forEach(b => b.onclick = () => {
+    const k = b.dataset.fib;
+    State.search.fibers.has(k) ? State.search.fibers.delete(k) : State.search.fibers.add(k);
+    State.search.adv = true; render();
+  });
+  const advt = $('advt'); if(advt) advt.onclick = () => { State.search.adv = !State.search.adv; render(); };
+  const gs = $('gsmsel'); if(gs){ gs.value = State.search.gsm; gs.onchange = e => { State.search.gsm = e.target.value; State.search.adv = true; render(); }; }
+  const ss = $('sortsel'); if(ss){ ss.value = State.search.sort; ss.onchange = e => { State.search.sort = e.target.value; State.search.adv = true; render(); }; }
+
+  host.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => copy(b.dataset.copy, '已複製布號 ' + b.dataset.copy));
+  host.querySelectorAll('[data-copypath]').forEach(b => b.onclick = () =>
+    copy(CONFIG.UNC + '\\' + b.dataset.copypath, '已複製路徑，貼到檔案總管開啟'));
+  /* 找不到 → 找代用 / 通知 */
+  const fsi = $('fsi-go');
+  if(fsi) fsi.onclick = () => {
+    const t = parseSpec($('fsi-spec').value);
+    if(!t || (!t.fibers.length && t.gsm == null)){ toast('至少給一個成分百分比或克重','or'); return; }
+    State.search.result = { kind:'spec', q:$('fsi-spec').value.trim(), target:t, ranked:rankAgainst(t, DATA) };
+    render();
+  };
+  host.querySelectorAll('[data-notify]').forEach(b => b.onclick = () => {
+    const code = b.dataset.notify;
+    const msg = $('notify-msg') ? $('notify-msg').value.trim() : '';
+    const list = Store.get('pendingRequests') || [];
+    const rec = { id:uid(), code, message:msg, fromUser:userName(),
+      ts:new Date().toLocaleString('zh-TW',{hour12:false}), iso:new Date().toISOString(), resolved:false };
+    list.unshift(rec);
+    Store.set('pendingRequests', list);
+    savePending(rec);
+    notifyEmail(code, msg, userName());
+    logHistory({ action:'notify', code, source:'找不到布' });
+    toast('已通知 DICK\'S 負責人','gn');
+    State.search.result = null; render();
+  });
+
+  /* pending */
+  host.querySelectorAll('[data-pr]').forEach(b => b.onclick = () => {
+    const list = Store.get('pendingRequests') || [];
+    const r = list.find(x => x.id === b.dataset.pr);
+    if(r){
+      r.resolved = true; r.resolvedBy = userName(); r.resolvedAt = new Date().toISOString();
+      Store.set('pendingRequests', list);
+      savePending(r);
+      logHistory({ action:'resolve', code:r.code, source:'待處理請求' });
+      toast('已標為處理完','gn'); render();
+    }
+  });
+
+  /* excel */
+  const drop = $('xl-drop'), xin = $('xl-input');
+  if(drop){
+    drop.onclick = e => { if(e.target !== xin) xin.click(); };
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+    drop.ondragleave = () => drop.classList.remove('over');
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over');
+      if(e.dataTransfer.files.length) readExcel(e.dataTransfer.files[0]); };
+  }
+  if(xin) xin.onchange = e => { if(e.target.files.length) readExcel(e.target.files[0]); };
+  const xr = $('xl-reset');
+  if(xr) xr.onclick = () => { State.excel = { fileName:null, sheetName:null, headerIdx:0, cols:{}, rows:[], filter:'all', expanded:null, raw:null, headerRow:[] }; render(); };
+  host.querySelectorAll('[data-xlf]').forEach(b => b.onclick = () => { State.excel.filter = b.dataset.xlf; State.excel.expanded = null; render(); });
+  host.querySelectorAll('[data-col]').forEach(s => s.onchange = () => {
+    const v = s.value;
+    if(v === '') delete State.excel.cols[s.dataset.col];
+    else State.excel.cols[s.dataset.col] = parseInt(v,10);
+    buildExcelRows(); render();
+  });
+  host.querySelectorAll('[data-xl-exp]').forEach(b => b.onclick = () => {
+    const i = parseInt(b.dataset.xlExp,10);
+    State.excel.expanded = State.excel.expanded === i ? null : i;
+    render();
+  });
+  host.querySelectorAll('[data-xl-commit]').forEach(b => b.onclick = () => commitRow(parseInt(b.dataset.xlCommit,10), null));
+  host.querySelectorAll('[data-pick]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    commitRow(parseInt(b.dataset.ctx,10), b.dataset.pick);
+  });
+  const ca = $('xl-commit-all');
+  if(ca) ca.onclick = () => {
+    let n = 0;
+    State.excel.rows.forEach(r => { if(r.status==='actual' && !r.committed && r.key){ commitRow(r.idx, null, true); n++; } });
+    toast(n ? '已採用 ' + n + ' 行' : '沒有可採用的行', n ? 'gn' : 'or');
+    render();
+  };
+
+  /* history */
+  const hq = $('hf-q');
+  if(hq) hq.oninput = e => { State.history.q = e.target.value; const t = $('tab-content'); t.innerHTML = viewHistory(); attach(); $('hf-q').focus(); $('hf-q').setSelectionRange(9999,9999); };
+  const ha = $('hf-action'); if(ha) ha.onchange = e => { State.history.action = e.target.value; render(); };
+  const he = $('hf-exp'); if(he) he.onclick = exportHistory;
+  const hc = $('hf-clear'); if(hc) hc.onclick = () => {
+    if(!confirm('確定清空全部操作紀錄？此動作無法復原。')) return;
+    Store.set('history', []); toast('已清空','gn'); render();
+  };
+
+  /* settings */
+  host.querySelectorAll('[data-sec]').forEach(b => b.onclick = () => { State.settings.section = b.dataset.sec; render(); });
+  const pfs = $('pf-save');
+  if(pfs) pfs.onclick = () => {
+    const v = $('pf-name').value.trim();
+    if(!v){ toast('姓名不能空白','or'); return; }
+    State.identity.name = v; Store.set('identity', State.identity); toast('已儲存','gn'); render();
+  };
+  const pfw = $('pf-switch'); if(pfw) pfw.onclick = () => { State.identity = null; Store.set('identity', null); render(); };
+  const sc = $('src-copy'); if(sc) sc.onclick = () => copy(CONFIG.UNC, '已複製掃描來源路徑');
+  const se = $('src-export'); if(se) se.onclick = exportFabrics;
+  const sp = $('src-pull'); if(sp) sp.onclick = () => pullAll(true);
+  const su = $('src-push');
+  if(su) su.onclick = async () => {
+    if(!confirm('把目前 ' + DATA.length + ' 筆布料整包上傳到雲端？\n會覆蓋 ' + CONFIG.FB.fabrics + ' 節點現有內容。')) return;
+    toast('上傳中…');
+    await pushAllFabrics();
+    logHistory({ action:'library_import', source:'手動上傳', label:DATA.length + ' 筆' });
+    toast('已上傳 ' + DATA.length + ' 筆','gn'); render();
+  };
+  const lf = $('lib-file');
+  if(lf) lf.onchange = e => { if(e.target.files.length) previewLibrary(e.target.files[0]); };
+  const lg = $('lib-go');
+  if(lg) lg.onclick = () => {
+    const p = State.lib.pending;
+    if(!p || !p.add.length){ toast('沒有新增資料','or'); return; }
+    const added = p.add.map(decorate);
+    DATA = DATA.concat(added);
+    saveFabrics(added);
+    logHistory({ action:'library_import', source:p.fileName, code:'', label:p.add.length + ' 筆' });
+    toast('已寫入 ' + p.add.length + ' 筆','gn');
+    State.lib.pending = null; render();
+  };
+  const lc = $('lib-cancel'); if(lc) lc.onclick = () => { State.lib.pending = null; render(); };
+
+  /* style */
+  const aa = $('add-acc');
+  if(aa) aa.onclick = () => {
+    const code = prompt('輸入配布布號');
+    if(!code) return;
+    const f = findFabric(code);
+    if(!f){ toast('公檔沒有這塊布','or'); return; }
+    const key = State.search.result.key, s = Store.get('style:'+key);
+    s.accessories = s.accessories || [];
+    if(s.accessories.some(a => normCode(a.code) === f.key)){ toast('已經加過了','or'); return; }
+    s.accessories.push({ code:f.code });
+    saveStyle(key, s);
+    logHistory({ action:'add_accessory', style:s.style, bom:s.bom, code:f.code, source:'款式頁' });
+    toast('已新增配布','gn'); render();
+  };
+  host.querySelectorAll('[data-del-style]').forEach(b => b.onclick = () => {
+    const key = b.dataset.delStyle;
+    if(!confirm('確定刪除款號「'+key+'」的採用紀錄？公檔布料不受影響。')) return;
+    const s = Store.get('style:'+key);
+    removeStyle(key);
+    logHistory({ action:'delete_style', style:s?s.style:key, bom:s?s.bom:'', source:'款式頁' });
+    toast('已刪除','gn'); State.search.result = null; render();
+  });
+  host.querySelectorAll('[data-adopt-main]').forEach(b => b.onclick = () => openAdoptModal(b.dataset.adoptMain,'main'));
+  host.querySelectorAll('[data-adopt-acc]').forEach(b => b.onclick = () => openAdoptModal(b.dataset.adoptAcc,'acc'));
+  host.querySelectorAll('[data-adopt-sub]').forEach(b => b.onclick = () => openAdoptModal(b.dataset.adoptSub,'sub'));
+  host.querySelectorAll('[data-edit-fab]').forEach(b => b.onclick = () => openFabricEditor(b.dataset.editFab));
+  host.querySelectorAll('[data-del-fab]').forEach(b => b.onclick = () => deleteFabricByCode(b.dataset.delFab));
+  host.querySelectorAll('[data-hist-edit]').forEach(b => b.onclick = () => { State.tab='search'; State.search.result={kind:'style', key:b.dataset.histEdit}; render(); });
+  host.querySelectorAll('[data-hist-del-entry]').forEach(b => b.onclick = () => {
+    const kid=b.dataset.histDelEntry;
+    if(!kid){ toast('這筆還沒同步，稍後再刪','or'); return; }
+    if(!confirm('刪除這一筆操作紀錄？（只刪紀錄，不影響款號與布料）')) return;
+    const list=(Store.get('history')||[]).filter(h => (h.fbid||h.id||'')!==kid);
+    Store.set('history', list);
+    fbDel(CONFIG.FB.history, kid);
+    toast('已刪除這筆紀錄','gn');
+    const t=$('tab-content'); if(t){ t.innerHTML=viewHistory(); attach(); }
+  });
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function commitRow(idx, pickCode, silent){
+  const r = State.excel.rows[idx];
+  if(!r) return;
+  if(!r.key){ if(!silent) toast('這列沒有款號，無法採用','or'); return; }
+  const useCode = pickCode || r.matchCode || r.code;
+  const f = findFabric(useCode);
+  if(!f){ if(!silent) toast('公檔沒有這塊布','or'); return; }
+  const isSub = !!pickCode;
+  const s = {
+    style:r.style, bom:r.bom, brand:'DICKS', season:r.season,
+    main:{ code:f.code, originalCode: isSub ? (r.code || null) : null,
+           originalSpec: isSub ? { sub:r.sub, comp:r.comp, gsm:r.gsm } : null },
+    accessories:[], committedBy:userName(), committedAt:new Date().toISOString()
+  };
+  saveStyle(r.key, s);
+  r.committed = true;
+  logHistory({ action: isSub ? 'commit_substitute' : 'commit_main',
+    style:r.style, bom:r.bom, code:f.code, original: isSub ? r.code : '', source:State.excel.fileName || 'Excel' });
+  if(!silent){ toast(isSub ? '已採用代用布 ' + f.code : '已採用 ' + f.code, 'gn'); render(); }
+}
+
+/* 找代用布 → 採用到款號（負責人手動登記主布 / 配布 / 代用主布） */
+function commitFabricToStyle(code, role, styleKeyRaw, originalCode, specCtx){
+  const f = findFabric(code);
+  if(!f){ toast('公檔沒有這塊布','or'); return false; }
+  const key = (styleKeyRaw||'').trim();
+  if(!key){ toast('款號必填','or'); return false; }
+  const styleNo = key.split('_')[0];
+  const bom = key.includes('_') ? key.split('_').slice(1).join('_') : '';
+  let s = Store.get('style:'+key) || { style:styleNo, bom, brand:'DICKS', season:'', main:null, accessories:[], committedBy:userName(), committedAt:new Date().toISOString() };
+  s.committedBy = userName(); s.committedAt = new Date().toISOString();
+  if(role === 'acc'){
+    s.accessories = s.accessories || [];
+    if(s.accessories.some(a => normCode(a.code) === f.key)){ toast('這款已經有這塊配布','or'); return false; }
+    s.accessories.push({ code:f.code });
+    saveStyle(key, s);
+    logHistory({ action:'add_accessory', style:styleNo, bom, code:f.code, source:'找代用布→採用' });
+  } else {
+    const isSub = role === 'sub';
+    const oc = isSub ? (originalCode||'').trim() : '';
+    const origText = oc || (isSub && specCtx ? (specCtx.text||'') : '');
+    s.main = { code:f.code, originalCode: isSub ? (origText||null) : null,
+               originalSpec: (isSub && specCtx) ? { sub:specCtx.sub||'', comp:specCtx.comp||'', gsm:(specCtx.gsm!=null?specCtx.gsm:null) } : null };
+    saveStyle(key, s);
+    logHistory({ action: isSub ? 'commit_substitute' : 'commit_main', style:styleNo, bom, code:f.code, original: isSub ? origText : '', source:'找代用布→採用' });
+  }
+  toast('已採用 '+f.code+' 到 '+key,'gn');
+  State.search.result = { kind:'style', key }; render();
+  return true;
+}
+const MEMBER_NAMES = ['Adia Chien','Chieh Hung','Debbie Chu','Elly Cheng','Huihui Gu','Jan Tu','Jean Huang','Karen King','Rock Chu','Rou Lin','Sixan Lin','Tinley Wang','Yoko Yeh','Yota Song'];
+function openMemberNamePicker(){
+  const cur = (State.identity && State.identity.name && MEMBER_NAMES.includes(State.identity.name)) ? State.identity.name : '';
+  document.querySelectorAll('.adopt-ov').forEach(x=>x.remove());
+  const ov=document.createElement('div'); ov.className='adopt-ov';
+  ov.innerHTML=`<div class="adopt-modal">
+    <div class="am-h">我是誰？</div>
+    <div class="am-b">
+      <label class="am-l">選擇你的名字 <span style="color:var(--rd)">*</span></label>
+      <select id="mn-name" class="pick" style="width:100%">
+        <option value="">— 選擇你的名字 —</option>
+        ${MEMBER_NAMES.map(n=>`<option value="${esc(n)}" ${cur===n?'selected':''}>${esc(n)}</option>`).join('')}
+      </select>
+      <div class="am-note">選好名字，之後「通知負責人」和操作紀錄就會顯示是你送出的。隨時可在右上角「署名」重選。</div>
+    </div>
+    <div class="am-acts">
+      <button class="btn ghost" id="mn-cancel">略過</button>
+      <button class="btn gn" id="mn-ok">確定</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+  ov.querySelector('#mn-cancel').onclick=close;
+  ov.querySelector('#mn-ok').onclick=()=>{
+    const nm=ov.querySelector('#mn-name').value;
+    if(!nm){ toast('請先選你的名字','or'); return; }
+    State.identity = Object.assign({}, State.identity||{role:'member'}, { name:nm });
+    Store.set('identity', State.identity);
+    toast('你是 '+nm,'gn'); close(); render();
+  };
+}
+function openAdoptModal(code, role){
+  if(!isAdmin()){ toast('只有負責人能採用','or'); return; }
+  const f = findFabric(code); if(!f){ toast('公檔沒有這塊布','or'); return; }
+  const titles = { main:'⭐ 設為主布', acc:'＋ 設為配布', sub:'💾 採用為代用布' };
+  document.querySelectorAll('.adopt-ov').forEach(x=>x.remove());
+  const ov = document.createElement('div'); ov.className='adopt-ov';
+  ov.innerHTML = `<div class="adopt-modal">
+    <div class="am-h">${titles[role]||'採用到款號'}　<span class="am-code">${esc(f.code)}</span></div>
+    <div class="am-b">
+      <label class="am-l">款號 <span style="color:var(--rd)">*</span></label>
+      <input id="am-key" class="tin" placeholder="例：D102345 或 D102345_BOM" autocomplete="off">
+      ${role==='sub' ? `<label class="am-l" style="margin-top:12px">客人原始布號（選填）</label>
+        <input id="am-orig" class="tin" placeholder="客人指定、公檔沒有的布號" autocomplete="off">` : ''}
+      <div class="am-note">${role==='acc'?'把這塊布加為該款的配布。':role==='sub'?'把這塊布登記為該款的代用主布，Comment 會標示原始布號。':'把這塊布登記為該款的主布。'}</div>
+    </div>
+    <div class="am-acts">
+      <button class="btn ghost" id="am-cancel">取消</button>
+      <button class="btn gn" id="am-ok">✓ 採用</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener('click', e=>{ if(e.target===ov) close(); });
+  ov.querySelector('#am-cancel').onclick=close;
+  const keyInp=ov.querySelector('#am-key'); setTimeout(()=>keyInp.focus(),40);
+  let specCtx=null;
+  if(role==='sub' && State.search.result && State.search.result.kind==='spec'){
+    const t=State.search.result.target||{};
+    specCtx={ text:State.search.result.q||'', sub:t.sub||'', comp:(t.fibers||[]).map(x=>x.p+'% '+(FIBER_ZH[x.f]||x.f)).join(', '), gsm:(t.gsm!=null?t.gsm:null) };
+  }
+  const submit=()=>{
+    const key=keyInp.value.trim();
+    if(!key){ toast('款號必填','or'); keyInp.focus(); return; }
+    const oe=ov.querySelector('#am-orig');
+    const orig = (role==='sub' && oe) ? oe.value.trim() : '';
+    if(commitFabricToStyle(code, role, key, orig, specCtx)) close();
+  };
+  ov.querySelector('#am-ok').onclick=submit;
+  keyInp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+}
+/* 編輯 / 刪除公檔布料（負責人） */
+function openFabricEditor(code){
+  if(!isAdmin()){ toast('只有負責人能編輯','or'); return; }
+  const f = findFabric(code); if(!f){ toast('找不到這塊布','or'); return; }
+  document.querySelectorAll('.adopt-ov').forEach(x=>x.remove());
+  const ov=document.createElement('div'); ov.className='adopt-ov';
+  ov.innerHTML=`<div class="adopt-modal">
+    <div class="am-h">✏️ 改布料資訊　<span class="am-code">${esc(f.code)}</span></div>
+    <div class="am-b">
+      <label class="am-l">布號</label>
+      <input id="ef-code" class="tin" value="${esc(f.code)}" autocomplete="off">
+      <label class="am-l" style="margin-top:10px">布種</label>
+      <select id="ef-type" class="pick" style="width:100%"><option value="Knit"${f.type==='Knit'?' selected':''}>針織 Knit</option><option value="Woven"${f.type==='Woven'?' selected':''}>梭織 Woven</option></select>
+      <label class="am-l" style="margin-top:10px">布種細項（sub）</label>
+      <input id="ef-sub" class="tin" value="${esc(f.sub||'')}" placeholder="例：Jersey、Plain Weave" autocomplete="off">
+      <label class="am-l" style="margin-top:10px">成分</label>
+      <input id="ef-comp" class="tin" value="${esc(f.comp||'')}" placeholder="例：88% Polyester, 12% Spandex" autocomplete="off">
+      <label class="am-l" style="margin-top:10px">克重（g/m²，可留空）</label>
+      <input id="ef-gsm" class="tin" type="number" value="${f.gsm==null?'':f.gsm}" autocomplete="off">
+    </div>
+    <div class="am-acts">
+      <button class="btn ghost" id="ef-cancel">取消</button>
+      <button class="btn gn" id="ef-ok">✓ 儲存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+  ov.querySelector('#ef-cancel').onclick=close;
+  ov.querySelector('#ef-ok').onclick=()=>{
+    const nc=ov.querySelector('#ef-code').value.trim();
+    if(!nc){ toast('布號必填','or'); return; }
+    const gv=ov.querySelector('#ef-gsm').value.trim();
+    const base={ code:nc, type:ov.querySelector('#ef-type').value,
+      sub:ov.querySelector('#ef-sub').value.trim(), comp:ov.querySelector('#ef-comp').value.trim(),
+      gsm: gv===''?null:Number(gv), src:f.src||[] };
+    const dec=decorate(base);
+    const idx=DATA.findIndex(x=>x.key===f.key);
+    if(idx<0){ toast('資料異常','or'); return; }
+    const oldKey=f.key;
+    if(dec.key!==oldKey && DATA.some((x,i)=>i!==idx && x.key===dec.key)){ toast('這個布號已經存在','or'); return; }
+    DATA[idx]=dec;
+    if(dec.key!==oldKey) fbDel(CONFIG.FB.fabrics, oldKey);
+    Store.set('fabrics', DATA.map(x=>({code:x.code,type:x.type,sub:x.sub,comp:x.comp,gsm:x.gsm,src:x.src})));
+    pushFabric(dec);
+    logHistory({ action:'fabric_edit', code:dec.code, source:'布料詳情' });
+    toast('已更新 '+dec.code,'gn'); close();
+    State.search.result={ kind:'fabric', code:dec.code }; render();
+  };
+}
+function deleteFabricByCode(code){
+  if(!isAdmin()){ toast('只有負責人能刪除','or'); return; }
+  const f=findFabric(code); if(!f){ toast('找不到這塊布','or'); return; }
+  if(!confirm('確定刪除布料「'+f.code+'」？只刪公檔這一筆，已採用的款號不受影響。')) return;
+  DATA=DATA.filter(x=>x.key!==f.key);
+  fbDel(CONFIG.FB.fabrics, f.key);
+  Store.set('fabrics', DATA.map(x=>({code:x.code,type:x.type,sub:x.sub,comp:x.comp,gsm:x.gsm,src:x.src})));
+  logHistory({ action:'fabric_delete', code:f.code, source:'布料詳情' });
+  toast('已刪除 '+f.code,'gn');
+  State.search.result=null; render();
+}
+
+function readExcel(file){
+  const fr = new FileReader();
+  fr.onload = e => {
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const sn = wb.SheetNames[0];
+      const raw = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1, defval:'' });
+      if(!raw.length){ toast('這個檔案是空的','rd'); return; }
+      // 找標題列：前 12 列中欄位命中最多的那一列
+      let best = 0, bestScore = -1;
+      for(let i = 0; i < Math.min(12, raw.length); i++){
+        const c = detectCols(raw[i]);
+        const n = Object.keys(c).length;
+        if(n > bestScore){ bestScore = n; best = i; }
+      }
+      State.excel.raw = raw;
+      State.excel.headerIdx = best;
+      State.excel.headerRow = raw[best];
+      State.excel.cols = detectCols(raw[best]);
+      State.excel.fileName = file.name;
+      State.excel.sheetName = sn;
+      State.excel.filter = 'all';
+      State.excel.expanded = null;
+      buildExcelRows();
+      logHistory({ action:'excel_import', source:file.name, label:State.excel.rows.length + ' 列' });
+      toast('讀到 ' + State.excel.rows.length + ' 列','gn');
+      render();
+    }catch(err){ toast('讀檔失敗：' + err.message,'rd'); }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+function previewLibrary(file){
+  const fr = new FileReader();
+  fr.onload = e => {
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const sn = wb.SheetNames[0];
+      const raw = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1, defval:'' });
+      let best = 0, bestScore = -1;
+      for(let i = 0; i < Math.min(12, raw.length); i++){
+        const c = detectCols(raw[i]); const n = Object.keys(c).length;
+        if(n > bestScore){ bestScore = n; best = i; }
+      }
+      const cols = detectCols(raw[best]);
+      if(cols.code === undefined){ toast('找不到布號欄，請確認表頭','rd'); return; }
+      const add = [], seen = new Set(DATA.map(f => f.key));
+      let dup = 0, skip = 0;
+      for(let i = best+1; i < raw.length; i++){
+        const r = raw[i]; if(!r) continue;
+        const cell = k => (cols[k] === undefined ? '' : String(r[cols[k]] ?? '').trim());
+        const code = cell('code');
+        if(!code){ skip++; continue; }
+        const key = normCode(code);
+        if(seen.has(key)){ dup++; continue; }
+        seen.add(key);
+        const gsmRaw = cell('gsm');
+        const sub = cell('sub') || null;
+        const KNIT = /jersey|tricot|interlock|knit|rib|fleece|terry|ponte|mesh|jacquard/i;
+        add.push({ code, sub, comp: cell('comp') || null,
+          gsm: gsmRaw ? (parseInt(String(gsmRaw).replace(/[^\d]/g,''),10) || null) : null,
+          type: sub ? (KNIT.test(sub) ? 'Knit' : 'Woven') : 'Woven', src:['excel'] });
+      }
+      State.lib.pending = { fileName:file.name, total:raw.length - best - 1, add, dup, skip };
+      render();
+    }catch(err){ toast('讀檔失敗：' + err.message,'rd'); }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+function exportFabrics(){
+  const rows = visible().map(f => ({
+    '布號':f.code,'布種':f.sub||'','類別':f.type,'成分':f.comp||'',
+    '克重(gsm)':f.gsm==null?'':f.gsm,'含彈性':f.spandex?'Y':'N','來源':(f.src||[]).join('+')
+  }));
+  if(!rows.length){ toast('沒有結果可匯出','or'); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'DICKS');
+  XLSX.writeFile(wb, 'DICKS_fabric_' + today() + '.xlsx');
+  toast('已匯出 ' + rows.length + ' 筆','gn');
+}
+function exportHistory(){
+  let list = Store.get('history') || [];
+  if(State.history.action !== 'all') list = list.filter(h => h.action === State.history.action);
+  if(State.history.q){ const q = State.history.q.toLowerCase(); list = list.filter(h => JSON.stringify(h).toLowerCase().includes(q)); }
+  if(!list.length){ toast('沒有紀錄可匯出','or'); return; }
+  const rows = list.map(h => ({
+    '時間':h.ts||'','操作':ACTION_LABEL[h.action]||h.action||'','操作人員':h.user||'',
+    '款號':h.style||'','BOM':h.bom||'','布號':h.code||'','原指定':h.original||'','來源':h.source||''
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'History');
+  XLSX.writeFile(wb, 'DICKS_history_' + today() + '.xlsx');
+  toast('已匯出 ' + rows.length + ' 筆','gn');
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+$('home').onclick = () => {
+  if(CONFIG.HOME_URL) location.href = CONFIG.HOME_URL;
+  else { State.tab='search'; State.search.result=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+};
+loadData();
+loadIdentity();
+render();
+pullAll(true);
+// 每 60 秒背景拉一次，讓待處理請求/紀錄在別台電腦更新後會自己出現
+setInterval(() => { if(document.visibilityState === 'visible') pullAll(false); }, 60000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') pullAll(false); });
+</script>
+</body>
+</html>
